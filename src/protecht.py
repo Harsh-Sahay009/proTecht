@@ -941,6 +941,16 @@ def index():
                 box-shadow: 0 10px 25px rgba(255, 107, 107, 0.4);
             }
 
+            .btn-secondary {
+                background: linear-gradient(45deg, #6c757d, #495057);
+                color: white;
+            }
+
+            .btn-secondary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 25px rgba(108, 117, 125, 0.4);
+            }
+
             .btn:disabled {
                 opacity: 0.6;
                 cursor: not-allowed;
@@ -1435,6 +1445,9 @@ Secrets in Secrets Manager rotated 30 days.</textarea>
                         <button class="btn btn-ai" onclick="getAIRecommendations()" id="aiBtn" disabled>
                             🤖 AI Recommendations
                         </button>
+                        <button class="btn btn-secondary" onclick="resetToSampleText()" id="resetBtn">
+                            🔄 Reset to Sample
+                        </button>
                     </div>
                 </div>
 
@@ -1498,10 +1511,16 @@ Secrets in Secrets Manager rotated 30 days.</textarea>
                 }
             }
 
+            // Global flag to track if a file has been uploaded
+            let fileUploaded = false;
+
             function updateSampleText(framework) {
                 const sspText = document.getElementById('sspText');
-                const sampleTexts = {
-                    'fedramp': `AC-2: Account Management
+                
+                // Only update with sample text if no file has been uploaded
+                if (!fileUploaded) {
+                    const sampleTexts = {
+                        'fedramp': `AC-2: Account Management
 AWS IAM, AWS SSO, and Okta federated via SAML are authoritative.
 Automated inactivation: Config rule \`phoenix-ac2-inactive\` disables after 30 days.
 
@@ -1517,8 +1536,8 @@ All ingress via ALB/CloudFront TLS 1.2+; WAF rules block OWASP Top 10.
 
 SI-4: System Monitoring
 GuardDuty, Detective, Security Hub all ON; custom CloudWatch Contributor Insights.`,
-                    
-                    'nist': `AC-2: Account Management
+                        
+                        'nist': `AC-2: Account Management
 AWS IAM provides centralized account management with automated user lifecycle.
 
 IA-2: Identification & Authentication
@@ -1532,8 +1551,8 @@ All data at rest is encrypted using AWS KMS customer master keys.
 
 SI-4: System Monitoring
 Comprehensive monitoring through CloudWatch, GuardDuty, and Security Hub.`,
-                    
-                    'iso27001': `A.9.1: Access Control
+                        
+                        'iso27001': `A.9.1: Access Control
 Access control policy is implemented through AWS IAM with role-based permissions.
 
 A.9.2: User Access Management
@@ -1547,8 +1566,8 @@ Security events are logged and monitored through CloudTrail and CloudWatch.
 
 A.12.6: Technical Vulnerability Management
 Vulnerability scanning is performed regularly using AWS Inspector and third-party tools.`,
-                    
-                    'pci': `Req-8: Identify Users and Authenticate Access
+                        
+                        'pci': `Req-8: Identify Users and Authenticate Access
 All users are assigned unique IDs and MFA is required for all access.
 
 Req-10: Log and Monitor All Access
@@ -1562,9 +1581,10 @@ Strong cryptography is used to protect cardholder data during transmission.
 
 Req-11: Test Security of Systems and Networks
 Regular security testing is performed including penetration testing and vulnerability scans.`
-                };
-                
-                sspText.value = sampleTexts[framework] || sampleTexts['fedramp'];
+                    };
+                    
+                    sspText.value = sampleTexts[framework] || sampleTexts['fedramp'];
+                }
             }
 
             async function handleFileUpload(event) {
@@ -1595,6 +1615,9 @@ Regular security testing is performed including penetration testing and vulnerab
                     if (result.success) {
                         // Update textarea with uploaded content
                         sspText.value = result.ssp_text;
+                        
+                        // Set flag to indicate file has been uploaded
+                        fileUploaded = true;
                         
                         // Show success message
                         uploadedFileName.textContent = `✅ ${result.filename}`;
@@ -1638,10 +1661,25 @@ Regular security testing is performed including penetration testing and vulnerab
                 fileUploadArea.style.borderColor = 'rgba(0, 212, 255, 0.5)';
             }
 
+            // Function to reset file upload state and allow sample text again
+            function resetFileUploadState() {
+                fileUploaded = false;
+                const uploadedFileInfo = document.getElementById('uploadedFileInfo');
+                uploadedFileInfo.style.display = 'none';
+            }
+
+            // Function to reset to sample text for current framework
+            function resetToSampleText() {
+                const frameworkSelect = document.getElementById('frameworkSelect');
+                resetFileUploadState();
+                updateSampleText(frameworkSelect.value);
+            }
+
             // Drag and drop functionality
             document.addEventListener('DOMContentLoaded', function() {
                 const fileUploadArea = document.getElementById('fileUploadArea');
                 const fileInput = document.getElementById('fileInput');
+                const sspText = document.getElementById('sspText');
 
                 fileUploadArea.addEventListener('dragover', function(e) {
                     e.preventDefault();
@@ -1661,6 +1699,14 @@ Regular security testing is performed including penetration testing and vulnerab
                     if (files.length > 0) {
                         fileInput.files = files;
                         handleFileUpload({ target: { files: files } });
+                    }
+                });
+
+                // Listen for changes to SSP textarea to reset file upload state
+                sspText.addEventListener('input', function() {
+                    // If user manually clears or significantly modifies the text, reset file upload state
+                    if (this.value.trim() === '') {
+                        resetFileUploadState();
                     }
                 });
             });
