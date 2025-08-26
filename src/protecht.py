@@ -1616,11 +1616,11 @@ def index():
                     
                     <div class="file-upload-section">
                         <div class="section-title">📁 Upload SSP File</div>
-                        <div class="file-upload-area" id="fileUploadArea">
+                        <div class="file-upload-area" id="fileUploadArea" onclick="document.getElementById('fileInput').click();">
                             <div class="file-upload-icon">📄</div>
                             <div class="file-upload-text">Click to upload or drag & drop</div>
                             <div class="file-upload-subtext">Supports: TXT, PDF, DOC, DOCX, MD (Max 16MB)</div>
-                            <input type="file" id="fileInput" class="file-input" accept=".txt,.pdf,.doc,.docx,.md">
+                            <input type="file" id="fileInput" class="file-input" accept=".txt,.pdf,.doc,.docx,.md" onchange="handleFileUpload(event)">
                         </div>
                         
                         <div class="uploaded-file-info" id="uploadedFileInfo" style="display: none;">
@@ -1966,22 +1966,18 @@ Regular security testing is performed including penetration testing and vulnerab
 
                 console.log('File upload elements found, adding event listeners...');
 
-                // Add click handler for file upload area
-                fileUploadArea.addEventListener('click', function(e) {
-                    console.log('File upload area clicked');
-                    e.preventDefault();
-                    fileInput.click();
-                });
+                // Ensure the file input change handler is set
+                if (!fileInput.onchange) {
+                    fileInput.addEventListener('change', function(e) {
+                        console.log('File input changed, files:', e.target.files);
+                        if (e.target.files.length > 0) {
+                            console.log('Calling handleFileUpload with file:', e.target.files[0].name);
+                            handleFileUpload(e);
+                        }
+                    });
+                }
 
-                // Add change handler for file input
-                fileInput.addEventListener('change', function(e) {
-                    console.log('File input changed, files:', e.target.files);
-                    if (e.target.files.length > 0) {
-                        console.log('Calling handleFileUpload with file:', e.target.files[0].name);
-                        handleFileUpload(e);
-                    }
-                });
-
+                // Add drag and drop handlers
                 fileUploadArea.addEventListener('dragover', function(e) {
                     e.preventDefault();
                     fileUploadArea.classList.add('dragover');
