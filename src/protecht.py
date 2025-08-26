@@ -1489,6 +1489,7 @@ def index():
                 height: 100%;
                 opacity: 0;
                 cursor: pointer;
+                z-index: 10;
             }
 
             .uploaded-file-info {
@@ -1619,7 +1620,7 @@ def index():
                             <div class="file-upload-icon">📄</div>
                             <div class="file-upload-text">Click to upload or drag & drop</div>
                             <div class="file-upload-subtext">Supports: TXT, PDF, DOC, DOCX, MD (Max 16MB)</div>
-                            <input type="file" id="fileInput" class="file-input" accept=".txt,.pdf,.doc,.docx,.md" style="display: none;">
+                            <input type="file" id="fileInput" class="file-input" accept=".txt,.pdf,.doc,.docx,.md">
                         </div>
                         
                         <div class="uploaded-file-info" id="uploadedFileInfo" style="display: none;">
@@ -1819,8 +1820,14 @@ Regular security testing is performed including penetration testing and vulnerab
             }
 
             async function handleFileUpload(event) {
+                console.log('handleFileUpload called with event:', event);
                 const file = event.target.files[0];
-                if (!file) return;
+                if (!file) {
+                    console.error('No file selected');
+                    return;
+                }
+
+                console.log('Processing file:', file.name, 'Size:', file.size, 'Type:', file.type);
 
                 const fileUploadArea = document.getElementById('fileUploadArea');
                 const uploadedFileInfo = document.getElementById('uploadedFileInfo');
@@ -1830,6 +1837,7 @@ Regular security testing is performed including penetration testing and vulnerab
 
                 // Check file size (16MB limit)
                 if (file.size > 16 * 1024 * 1024) {
+                    console.error('File too large:', file.size);
                     showUploadError('File size exceeds 16MB limit');
                     return;
                 }
@@ -1840,9 +1848,12 @@ Regular security testing is performed including penetration testing and vulnerab
                 const isValidType = allowedTypes.some(type => fileName.endsWith(type));
                 
                 if (!isValidType) {
+                    console.error('Invalid file type:', fileName);
                     showUploadError('Invalid file type. Please upload TXT, PDF, DOC, DOCX, or MD files.');
                     return;
                 }
+
+                console.log('File validation passed, starting upload...');
 
                 // Show loading state
                 fileUploadArea.innerHTML = '<div class="file-upload-icon">⏳</div><div class="file-upload-text">Processing file...</div>';
@@ -1851,17 +1862,21 @@ Regular security testing is performed including penetration testing and vulnerab
                 try {
                     const formData = new FormData();
                     formData.append('file', file);
+                    console.log('FormData created, sending to server...');
 
                     const response = await fetch('/upload', {
                         method: 'POST',
                         body: formData
                     });
 
+                    console.log('Server response received:', response.status);
                     const result = await response.json();
+                    console.log('Response data:', result);
 
                     if (result.success) {
                         // Check if the extracted text looks valid
                         if (result.ssp_text && result.ssp_text.length > 10 && !result.ssp_text.includes('Error extracting')) {
+                            console.log('Text extraction successful, updating UI...');
                             // Update textarea with uploaded content
                             sspText.value = result.ssp_text;
                             
@@ -1884,9 +1899,11 @@ Regular security testing is performed including penetration testing and vulnerab
                                 resetFileUploadArea();
                             }, 2000);
                         } else {
+                            console.error('Text extraction failed:', result.ssp_text);
                             throw new Error('Unable to extract readable text from file. Please ensure it contains text content.');
                         }
                     } else {
+                        console.error('Server returned error:', result.error);
                         throw new Error(result.error || 'Upload failed');
                     }
                 } catch (error) {
@@ -1933,19 +1950,34 @@ Regular security testing is performed including penetration testing and vulnerab
 
             // Drag and drop functionality
             document.addEventListener('DOMContentLoaded', function() {
+                console.log('DOM loaded, setting up file upload handlers...');
                 const fileUploadArea = document.getElementById('fileUploadArea');
                 const fileInput = document.getElementById('fileInput');
                 const sspText = document.getElementById('sspText');
 
+                if (!fileUploadArea) {
+                    console.error('fileUploadArea not found!');
+                    return;
+                }
+                if (!fileInput) {
+                    console.error('fileInput not found!');
+                    return;
+                }
+
+                console.log('File upload elements found, adding event listeners...');
+
                 // Add click handler for file upload area
                 fileUploadArea.addEventListener('click', function(e) {
+                    console.log('File upload area clicked');
                     e.preventDefault();
                     fileInput.click();
                 });
 
                 // Add change handler for file input
                 fileInput.addEventListener('change', function(e) {
+                    console.log('File input changed, files:', e.target.files);
                     if (e.target.files.length > 0) {
+                        console.log('Calling handleFileUpload with file:', e.target.files[0].name);
                         handleFileUpload(e);
                     }
                 });
@@ -1965,6 +1997,7 @@ Regular security testing is performed including penetration testing and vulnerab
                     fileUploadArea.classList.remove('dragover');
                     
                     const files = e.dataTransfer.files;
+                    console.log('Files dropped:', files);
                     if (files.length > 0) {
                         fileInput.files = files;
                         handleFileUpload({ target: { files: files } });
@@ -1978,6 +2011,8 @@ Regular security testing is performed including penetration testing and vulnerab
                         resetFileUploadState();
                     }
                 });
+
+                console.log('File upload handlers setup complete');
             });
 
             async function analyzeSSP() {
