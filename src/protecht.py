@@ -573,26 +573,193 @@ FRAMEWORKS = {
 }
 
 def parse_ssp(ssp_text, framework_controls):
-    """Parse SSP text and extract controls for the selected framework"""
+    """Parse SSP text and extract controls for the selected framework using intelligent pattern matching"""
     controls = {}
     
+    # Normalize text for better matching
+    ssp_text_normalized = ssp_text.replace('\r', '\n').replace('\t', ' ')
+    
+    # Multiple extraction strategies
+    extracted_controls = {}
+    
+    # Strategy 1: Direct pattern matching (original method)
     for control_id, pattern in framework_controls.items():
-        match = re.search(pattern, ssp_text, re.IGNORECASE)
+        match = re.search(pattern, ssp_text_normalized, re.IGNORECASE | re.MULTILINE)
         if match:
-            # Extract description from the line
-            lines = ssp_text.split('\n')
-            for i, line in enumerate(lines):
-                if control_id in line:
-                    # Get next few lines as description
-                    description = line
-                    for j in range(i+1, min(i+5, len(lines))):
-                        if lines[j].strip() and not re.match(r'^[A-Z]+-\d+|[A-Z]+\.[0-9]+\.[0-9]+|Req-[0-9]+', lines[j]):
-                            description += ' ' + lines[j].strip()
-                    controls[control_id] = {
-                        'description': description.strip(),
-                        'raw_text': line.strip()
-                    }
+            extracted_controls[control_id] = extract_control_content(ssp_text_normalized, control_id, match.start())
+    
+    # Strategy 2: Flexible control ID matching
+    if not extracted_controls:
+        extracted_controls = extract_controls_by_id(ssp_text_normalized, framework_controls)
+    
+    # Strategy 3: Semantic matching based on control descriptions
+    if not extracted_controls:
+        extracted_controls = extract_controls_by_semantics(ssp_text_normalized, framework_controls)
+    
+    # Strategy 4: Keyword-based extraction
+    if not extracted_controls:
+        extracted_controls = extract_controls_by_keywords(ssp_text_normalized, framework_controls)
+    
+    return extracted_controls
+
+def extract_control_content(ssp_text, control_id, start_pos):
+    """Extract control content from a specific position"""
+    lines = ssp_text.split('\n')
+    content_lines = []
+    
+    # Find the line containing the control
+    control_line = ""
+    for line in lines:
+        if control_id in line:
+            control_line = line.strip()
+            break
+    
+    # Extract surrounding context (up to 10 lines)
+    start_line = max(0, start_pos - 5)
+    end_line = min(len(lines), start_pos + 10)
+    
+    for i in range(start_line, end_line):
+        if lines[i].strip():
+            content_lines.append(lines[i].strip())
+    
+    description = ' '.join(content_lines)
+    
+    return {
+        'description': description,
+        'raw_text': control_line,
+        'confidence': 0.9
+    }
+
+def extract_controls_by_id(ssp_text, framework_controls):
+    """Extract controls using flexible control ID patterns"""
+    controls = {}
+    
+    # Multiple control ID patterns to try
+    control_patterns = [
+        r'([A-Z]+-\d+)[:\s]+([^.\n]+)',  # AC-2: Account Management
+        r'([A-Z]+-\d+)\s*[-–]\s*([^.\n]+)',  # AC-2 - Account Management
+        r'([A-Z]+-\d+)\s+([^.\n]+)',  # AC-2 Account Management
+        r'([A-Z]+\.\d+)[:\s]+([^.\n]+)',  # A.9.1: Access Control
+        r'(Req-\d+)[:\s]+([^.\n]+)',  # Req-8: Identify Users
+    ]
+    
+    for pattern in control_patterns:
+        matches = re.finditer(pattern, ssp_text, re.IGNORECASE | re.MULTILINE)
+        for match in matches:
+            control_id = match.group(1).upper()
+            control_title = match.group(2).strip()
+            
+            # Try to match with framework controls
+            for framework_id, framework_pattern in framework_controls.items():
+                if control_id == framework_id or control_id.replace('.', '-') == framework_id:
+                    # Extract content around this control
+                    start_pos = match.start()
+                    controls[framework_id] = extract_control_content(ssp_text, framework_id, start_pos)
+                    controls[framework_id]['confidence'] = 0.8
                     break
+    
+    return controls
+
+def extract_controls_by_semantics(ssp_text, framework_controls):
+    """Extract controls using semantic matching based on descriptions"""
+    controls = {}
+    
+    # Define semantic keywords for each control family
+    semantic_keywords = {
+        'AC': ['access', 'account', 'authentication', 'authorization', 'identity', 'user', 'login', 'password', 'mfa', 'sso'],
+        'AU': ['audit', 'logging', 'trail', 'monitor', 'record', 'log', 'cloudtrail'],
+        'SC': ['security', 'boundary', 'network', 'encryption', 'cryptographic', 'transmission', 'protection', 'vpc', 'firewall'],
+        'SI': ['system', 'monitoring', 'integrity', 'software', 'firmware', 'input', 'validation'],
+        'CP': ['contingency', 'backup', 'recovery', 'disaster', 'alternate', 'site', 'business', 'continuity'],
+        'RA': ['risk', 'assessment', 'vulnerability', 'scanning', 'threat', 'intelligence'],
+        'CM': ['configuration', 'change', 'management', 'baseline', 'settings'],
+        'IA': ['identification', 'authentication', 'credential', 'token', 'certificate'],
+        'IR': ['incident', 'response', 'handling', 'reporting', 'training'],
+        'MA': ['maintenance', 'controlled', 'scheduled'],
+        'MP': ['media', 'protection', 'storage', 'access'],
+        'PE': ['physical', 'environment', 'access', 'authorization'],
+        'PL': ['planning', 'policy', 'procedure', 'standard'],
+        'PM': ['program', 'management', 'authorization', 'assessment'],
+        'SA': ['system', 'acquisition', 'development', 'testing'],
+        'SR': ['supply', 'chain', 'risk', 'management']
+    }
+    
+    # Split text into sections
+    sections = re.split(r'\n\s*\n', ssp_text)
+    
+    for section in sections:
+        section_lower = section.lower()
+        
+        # Determine control family based on keywords
+        best_match = None
+        best_score = 0
+        
+        for family, keywords in semantic_keywords.items():
+            score = sum(1 for keyword in keywords if keyword in section_lower)
+            if score > best_score:
+                best_score = score
+                best_match = family
+        
+        if best_match and best_score >= 2:  # At least 2 keywords match
+            # Try to find specific control numbers in this section
+            control_matches = re.findall(r'([A-Z]+-\d+)', section, re.IGNORECASE)
+            
+            for control_match in control_matches:
+                if control_match in framework_controls:
+                    controls[control_match] = {
+                        'description': section.strip(),
+                        'raw_text': control_match,
+                        'confidence': min(0.7, best_score * 0.1)
+                    }
+    
+    return controls
+
+def extract_controls_by_keywords(ssp_text, framework_controls):
+    """Extract controls using keyword-based matching"""
+    controls = {}
+    
+    # Define control-specific keywords
+    control_keywords = {
+        'AC-2': ['account', 'management', 'user', 'iam', 'aws', 'sso', 'okta', 'password', 'policy'],
+        'SC-7': ['boundary', 'protection', 'network', 'vpc', 'security', 'groups', 'firewall', 'nacl'],
+        'SC-13': ['cryptographic', 'encryption', 'kms', 'key', 'rotation', 'aes', 'ssl', 'tls'],
+        'SI-4': ['monitoring', 'system', 'guardduty', 'security', 'hub', 'cloudwatch', 'alarm'],
+        'AU-2': ['audit', 'events', 'cloudtrail', 'logging', 'validation', 'insight'],
+        'AU-12': ['log', 'retention', 's3', 'object', 'lock', 'glacier', 'archive'],
+        'CM-6': ['configuration', 'settings', 'config', 'rules', 'compliance', 'conformance'],
+        'RA-5': ['vulnerability', 'scanning', 'inspector', 'macie', 'findings', 'critical', 'high'],
+        'CP-7': ['alternate', 'processing', 'site', 'aurora', 'global', 'failover', 'lambda'],
+        'CP-9': ['backup', 'system', 'vault', 'resources', 'protected', 'cross', 'region'],
+        'SC-8': ['transmission', 'protection', 'tls', 'ssl', 'cloudfront', 'waf', 'alb'],
+        'SC-12': ['cryptographic', 'key', 'establishment', 'management', 'rotation', 'alias'],
+        'SC-28': ['protection', 'information', 'rest', 'encryption', 's3', 'rds', 'efs', 'dynamodb'],
+        'SI-7': ['software', 'integrity', 'codebuild', 'codepipeline', 'ssm', 'patch', 'pending']
+    }
+    
+    # Split text into paragraphs
+    paragraphs = re.split(r'\n\s*\n', ssp_text)
+    
+    for paragraph in paragraphs:
+        paragraph_lower = paragraph.lower()
+        
+        # Score each control based on keyword matches
+        control_scores = {}
+        
+        for control_id, keywords in control_keywords.items():
+            if control_id in framework_controls:
+                score = sum(1 for keyword in keywords if keyword in paragraph_lower)
+                if score >= 2:  # At least 2 keywords must match
+                    control_scores[control_id] = score
+        
+        # Select the best matching control for this paragraph
+        if control_scores:
+            best_control = max(control_scores, key=control_scores.get)
+            if control_scores[best_control] >= 2:
+                controls[best_control] = {
+                    'description': paragraph.strip(),
+                    'raw_text': best_control,
+                    'confidence': min(0.6, control_scores[best_control] * 0.1)
+                }
     
     return controls
 
@@ -2115,6 +2282,64 @@ def health():
         'timestamp': datetime.now().isoformat(),
         'version': '1.0.0'
     })
+
+@app.route('/debug-extraction', methods=['POST'])
+def debug_extraction():
+    """Debug endpoint to test control extraction"""
+    try:
+        data = request.get_json()
+        ssp_text = data.get('ssp_text', '')
+        framework_name = data.get('framework', 'fedramp')
+        
+        if not ssp_text:
+            return jsonify({'error': 'No SSP text provided'}), 400
+        
+        # Get framework data
+        framework_data = FRAMEWORKS.get(framework_name)
+        if not framework_data:
+            return jsonify({'error': f'Framework "{framework_name}" not found'}), 400
+        
+        # Test each extraction strategy
+        debug_results = {
+            'ssp_text_length': len(ssp_text),
+            'framework': framework_name,
+            'extraction_results': {}
+        }
+        
+        # Strategy 1: Direct pattern matching
+        controls_direct = {}
+        for control_id, pattern in framework_data['controls'].items():
+            match = re.search(pattern, ssp_text, re.IGNORECASE | re.MULTILINE)
+            if match:
+                controls_direct[control_id] = {
+                    'matched_text': ssp_text[match.start():match.end()],
+                    'position': match.start()
+                }
+        debug_results['extraction_results']['direct_pattern'] = controls_direct
+        
+        # Strategy 2: Flexible control ID matching
+        controls_flexible = extract_controls_by_id(ssp_text, framework_data['controls'])
+        debug_results['extraction_results']['flexible_id'] = controls_flexible
+        
+        # Strategy 3: Semantic matching
+        controls_semantic = extract_controls_by_semantics(ssp_text, framework_data['controls'])
+        debug_results['extraction_results']['semantic'] = controls_semantic
+        
+        # Strategy 4: Keyword-based
+        controls_keywords = extract_controls_by_keywords(ssp_text, framework_data['controls'])
+        debug_results['extraction_results']['keywords'] = controls_keywords
+        
+        # Final result using the main parse_ssp function
+        final_controls = parse_ssp(ssp_text, framework_data['controls'])
+        debug_results['final_extracted_controls'] = final_controls
+        
+        return jsonify({
+            'success': True,
+            'debug_info': debug_results
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     print("🚀 Starting proTecht Simple MVP...")
