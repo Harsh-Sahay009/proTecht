@@ -27,14 +27,58 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def extract_text_from_file(file_path):
-    """Extract text from uploaded file"""
+    """Extract text from uploaded file with proper handling for different file types"""
+    file_extension = file_path.lower().split('.')[-1]
+    
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            return f.read()
-    except UnicodeDecodeError:
-        # Try with different encoding
-        with open(file_path, 'r', encoding='latin-1') as f:
-            return f.read()
+        if file_extension == 'txt' or file_extension == 'md':
+            # Plain text files
+            with open(file_path, 'r', encoding='utf-8') as f:
+                return f.read()
+        elif file_extension == 'pdf':
+            # PDF files - try to extract text
+            try:
+                import PyPDF2
+                with open(file_path, 'rb') as f:
+                    pdf_reader = PyPDF2.PdfReader(f)
+                    text = ""
+                    for page in pdf_reader.pages:
+                        text += page.extract_text() + "\n"
+                    return text
+            except ImportError:
+                return "PDF text extraction requires PyPDF2 library. Please install: pip install PyPDF2"
+            except Exception as e:
+                return f"Error extracting PDF text: {str(e)}"
+        elif file_extension in ['doc', 'docx']:
+            # Word documents - try to extract text
+            try:
+                import docx
+                doc = docx.Document(file_path)
+                text = ""
+                for paragraph in doc.paragraphs:
+                    text += paragraph.text + "\n"
+                return text
+            except ImportError:
+                return "Word document text extraction requires python-docx library. Please install: pip install python-docx"
+            except Exception as e:
+                return f"Error extracting Word document text: {str(e)}"
+        else:
+            # Try as plain text with different encodings
+            encodings = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
+            for encoding in encodings:
+                try:
+                    with open(file_path, 'r', encoding=encoding) as f:
+                        content = f.read()
+                        # Check if content looks like text (not binary)
+                        if len(content) > 0 and not any(ord(char) < 32 and char not in '\n\r\t' for char in content[:100]):
+                            return content
+                except (UnicodeDecodeError, UnicodeError):
+                    continue
+            
+            return "Unable to extract text from file. Please ensure it's a text file or install required libraries for PDF/DOC files."
+            
+    except Exception as e:
+        return f"Error reading file: {str(e)}"
 
 def get_aws_data():
     """Get AWS data from database or fallback"""
@@ -1571,14 +1615,14 @@ def index():
                     
                     <div class="file-upload-section">
                         <div class="section-title">📁 Upload SSP File</div>
-                        <div class="file-upload-area" id="fileUploadArea" onclick="document.getElementById('fileInput').click()">
+                        <div class="file-upload-area" id="fileUploadArea">
                             <div class="file-upload-icon">📄</div>
                             <div class="file-upload-text">Click to upload or drag & drop</div>
                             <div class="file-upload-subtext">Supports: TXT, PDF, DOC, DOCX, MD (Max 16MB)</div>
-                            <input type="file" id="fileInput" class="file-input" accept=".txt,.pdf,.doc,.docx,.md" onchange="handleFileUpload(event)">
+                            <input type="file" id="fileInput" class="file-input" accept=".txt,.pdf,.doc,.docx,.md" style="display: none;">
                         </div>
                         
-                        <div class="uploaded-file-info" id="uploadedFileInfo">
+                        <div class="uploaded-file-info" id="uploadedFileInfo" style="display: none;">
                             <h4 id="uploadedFileName">File Uploaded Successfully!</h4>
                             <p id="uploadedFileMessage">Your SSP file has been processed and loaded.</p>
                         </div>
@@ -1784,6 +1828,22 @@ Regular security testing is performed including penetration testing and vulnerab
                 const uploadedFileMessage = document.getElementById('uploadedFileMessage');
                 const sspText = document.getElementById('sspText');
 
+                // Check file size (16MB limit)
+                if (file.size > 16 * 1024 * 1024) {
+                    showUploadError('File size exceeds 16MB limit');
+                    return;
+                }
+
+                // Check file type
+                const allowedTypes = ['.txt', '.pdf', '.doc', '.docx', '.md'];
+                const fileName = file.name.toLowerCase();
+                const isValidType = allowedTypes.some(type => fileName.endsWith(type));
+                
+                if (!isValidType) {
+                    showUploadError('Invalid file type. Please upload TXT, PDF, DOC, DOCX, or MD files.');
+                    return;
+                }
+
                 // Show loading state
                 fileUploadArea.innerHTML = '<div class="file-upload-icon">⏳</div><div class="file-upload-text">Processing file...</div>';
                 fileUploadArea.style.borderColor = '#ffaa00';
@@ -1800,42 +1860,51 @@ Regular security testing is performed including penetration testing and vulnerab
                     const result = await response.json();
 
                     if (result.success) {
-                        // Update textarea with uploaded content
-                        sspText.value = result.ssp_text;
-                        
-                        // Set flag to indicate file has been uploaded
-                        fileUploaded = true;
-                        
-                        // Show success message
-                        uploadedFileName.textContent = `✅ ${result.filename}`;
-                        uploadedFileMessage.textContent = result.message;
-                        uploadedFileInfo.style.display = 'block';
-                        
-                        // Reset upload area
-                        resetFileUploadArea();
-                        
-                        // Show success animation
-                        fileUploadArea.innerHTML = '<div class="file-upload-icon">✅</div><div class="file-upload-text">File uploaded successfully!</div>';
-                        fileUploadArea.style.borderColor = '#00ff00';
-                        
-                        setTimeout(() => {
+                        // Check if the extracted text looks valid
+                        if (result.ssp_text && result.ssp_text.length > 10 && !result.ssp_text.includes('Error extracting')) {
+                            // Update textarea with uploaded content
+                            sspText.value = result.ssp_text;
+                            
+                            // Set flag to indicate file has been uploaded
+                            fileUploaded = true;
+                            
+                            // Show success message
+                            uploadedFileName.textContent = `✅ ${result.filename}`;
+                            uploadedFileMessage.textContent = result.message;
+                            uploadedFileInfo.style.display = 'block';
+                            
+                            // Reset upload area
                             resetFileUploadArea();
-                        }, 2000);
-                        
+                            
+                            // Show success animation
+                            fileUploadArea.innerHTML = '<div class="file-upload-icon">✅</div><div class="file-upload-text">File uploaded successfully!</div>';
+                            fileUploadArea.style.borderColor = '#00ff00';
+                            
+                            setTimeout(() => {
+                                resetFileUploadArea();
+                            }, 2000);
+                        } else {
+                            throw new Error('Unable to extract readable text from file. Please ensure it contains text content.');
+                        }
                     } else {
-                        throw new Error(result.error);
+                        throw new Error(result.error || 'Upload failed');
                     }
                 } catch (error) {
                     console.error('Upload error:', error);
-                    
-                    // Show error state
-                    fileUploadArea.innerHTML = '<div class="file-upload-icon">❌</div><div class="file-upload-text">Upload failed</div><div class="file-upload-subtext">' + error.message + '</div>';
-                    fileUploadArea.style.borderColor = '#ff4444';
-                    
-                    setTimeout(() => {
-                        resetFileUploadArea();
-                    }, 3000);
+                    showUploadError(error.message);
                 }
+            }
+
+            function showUploadError(message) {
+                const fileUploadArea = document.getElementById('fileUploadArea');
+                
+                // Show error state
+                fileUploadArea.innerHTML = '<div class="file-upload-icon">❌</div><div class="file-upload-text">Upload failed</div><div class="file-upload-subtext">' + message + '</div>';
+                fileUploadArea.style.borderColor = '#ff4444';
+                
+                setTimeout(() => {
+                    resetFileUploadArea();
+                }, 5000);
             }
 
             function resetFileUploadArea() {
@@ -1867,6 +1936,19 @@ Regular security testing is performed including penetration testing and vulnerab
                 const fileUploadArea = document.getElementById('fileUploadArea');
                 const fileInput = document.getElementById('fileInput');
                 const sspText = document.getElementById('sspText');
+
+                // Add click handler for file upload area
+                fileUploadArea.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    fileInput.click();
+                });
+
+                // Add change handler for file input
+                fileInput.addEventListener('change', function(e) {
+                    if (e.target.files.length > 0) {
+                        handleFileUpload(e);
+                    }
+                });
 
                 fileUploadArea.addEventListener('dragover', function(e) {
                     e.preventDefault();
