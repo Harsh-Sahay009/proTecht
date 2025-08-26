@@ -36,8 +36,28 @@ def extract_text_from_file(file_path):
         with open(file_path, 'r', encoding='latin-1') as f:
             return f.read()
 
-# Your complete AWS data
-FAKE_AWS_DATA = {
+def get_aws_data():
+    """Get AWS data from database or fallback"""
+    if db:
+        try:
+            return db.get_aws_data()
+        except Exception as e:
+            print(f"⚠️  Database error, using fallback data: {e}")
+            return FALLBACK_AWS_DATA
+    else:
+        return FALLBACK_AWS_DATA
+
+# Database integration
+try:
+    from database import ProTechtDatabase
+    db = ProTechtDatabase()
+    print("✅ Database connection established")
+except ImportError:
+    print("⚠️  Database module not found, using fallback data")
+    db = None
+
+# Fallback AWS data (used if database is not available)
+FALLBACK_AWS_DATA = {
     "account_metadata": {
         "org_id": "o-abc123xyz",
         "master_payer_id": "123456789012",
@@ -1906,7 +1926,7 @@ def analyze():
         # Check compliance for each control
         audit_results = {}
         for control_id, control_info in controls.items():
-            result = check_compliance(control_id, control_info['description'], FAKE_AWS_DATA, framework_data['rules'])
+            result = check_compliance(control_id, control_info['description'], get_aws_data(), framework_data['rules'])
             audit_results[control_id] = result
         
         # Calculate summary
