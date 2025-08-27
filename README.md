@@ -45,7 +45,7 @@ proTecht is a comprehensive cybersecurity compliance automation platform that su
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/protecht.git
+   git clone https://github.com/Harsh-Sahay009/protecht.git
    cd protecht
    ```
 
