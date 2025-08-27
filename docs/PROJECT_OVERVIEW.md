@@ -6,31 +6,31 @@
 
 ##  Key Achievements
 
-### ** Multi-Framework Compliance Support**
+###  Multi-Framework Compliance Support
 - **4 Major Frameworks**: FedRAMP, NIST 800-53, ISO 27001, PCI DSS
 - **50+ Controls**: Comprehensive coverage across all frameworks
 - **Real-Time Analysis**: Instant compliance validation and scoring
 - **Framework-Specific Logic**: Tailored analysis for each compliance standard
 
-### ** AI-Powered Intelligence**
+### AI-Powered Intelligence
 - **Intelligent Recommendations**: AI-generated remediation suggestions
 - **Risk Assessment**: Automated risk scoring and prioritization
 - **Context-Aware Analysis**: Framework-specific compliance checking
 - **Strategic Guidance**: Actionable compliance improvement steps
 
-### ** Professional File Handling**
+### Professional File Handling
 - **Drag & Drop Interface**: Modern, intuitive file upload experience
 - **Multiple Formats**: TXT, PDF, DOC, DOCX, MD support
 - **Real-Time Processing**: Instant file analysis and text extraction
 - **Secure Operations**: Automatic file cleanup and validation
 
-### ** Enterprise-Grade Interface**
+###  Enterprise-Grade Interface
 - **Futuristic Design**: Modern, responsive web interface
 - **Real-Time Updates**: Live compliance status and scoring
 - **Interactive Visualizations**: Dynamic charts and progress indicators
 - **Mobile Responsive**: Seamless experience across all devices
 
-##  **Technical Architecture**
+##  Technical Architecture
 
 ### **Backend Stack**
 - **Python 3.8+**: Core application logic
@@ -38,13 +38,13 @@
 - **Werkzeug**: File handling and security
 - **Professional Structure**: Modular, maintainable codebase
 
-### **Frontend Technologies**
+### Frontend Technologies
 - **HTML5/CSS3**: Modern, responsive design
 - **JavaScript (ES6+)**: Interactive user experience
 - **Futuristic UI**: Glass-morphism design with animations
 - **Real-Time Updates**: Dynamic content without page refreshes
 
-### **Key Features**
+### Key Features
 - **Multi-Framework Analysis**: Support for 4 major compliance standards
 - **AI Recommendations**: Intelligent compliance suggestions
 - **File Upload System**: Professional drag-and-drop interface
