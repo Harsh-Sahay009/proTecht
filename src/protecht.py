@@ -2968,7 +2968,6 @@ def debug_extraction():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    print("🚀 Starting proTecht Simple MVP...")
-    print("📊 Server will be available at http://localhost:5000")
-    print("🎯 No authentication required!")
+    print("Starting proTecht Simple MVP...")
+    print("Server will be available at http://localhost:5000")
     app.run(host='0.0.0.0', port=5000, debug=True) 
