@@ -2334,7 +2334,7 @@ Regular security testing is performed including penetration testing and vulnerab
                 console.log('AI content element in test:', aiContent);
                 
                 if (aiContent) {
-                    aiContent.innerHTML = '<div style="color: #00ff00; text-align: center; padding: 20px; font-size: 18px;">✅ Tab content is working! This is a test message.</div>';
+                    aiContent.innerHTML = '<div style="color: #00ff00; text-align: center; padding: 20px; font-size: 18px;">Tab content is working! This is a test message.</div>';
                     console.log('Test content set successfully');
                 } else {
                     console.error('AI content element not found!');
@@ -2490,10 +2490,10 @@ Regular security testing is performed including penetration testing and vulnerab
                         displayResults(data);
                         aiBtn.disabled = false;
                     } else {
-                        resultsDiv.innerHTML = '<div style="color: #ff6b6b; text-align: center; padding: 20px;">❌ Error: ' + data.error + '</div>';
+                        resultsDiv.innerHTML = '<div style="color: #ff6b6b; text-align: center; padding: 20px;">Error: ' + data.error + '</div>';
                     }
                 } catch (error) {
-                    resultsDiv.innerHTML = '<div style="color: #ff6b6b; text-align: center; padding: 20px;">❌ Error: ' + error.message + '</div>';
+                    resultsDiv.innerHTML = '<div style="color: #ff6b6b; text-align: center; padding: 20px;">Error: ' + error.message + '</div>';
                 } finally {
                     loadingDiv.style.display = 'none';
                 }

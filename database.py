@@ -804,7 +804,7 @@ class ProTechtDatabase:
             
         except Exception as e:
             conn.rollback()
-            print(f"❌ Error loading AWS data: {e}")
+            print(f"Error loading AWS data: {e}")
             raise
         finally:
             conn.close()
@@ -992,7 +992,7 @@ class ProTechtDatabase:
             rows = cursor.fetchall()
             return [dict(row) for row in rows]
         except Exception as e:
-            print(f"❌ Error getting {service_name} data: {e}")
+            print(f"Error getting {service_name} data: {e}")
             return []
         finally:
             conn.close()

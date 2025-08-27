@@ -14,7 +14,7 @@ def show_database_stats():
     conn = db.get_connection()
     cursor = conn.cursor()
     
-    print("📊 proTecht Database Statistics")
+    print("proTecht Database Statistics")
     print("=" * 50)
     
     tables = [
@@ -77,15 +77,15 @@ def backup_database():
     
     try:
         shutil.copy2("protecht.db", backup_name)
-        print(f"✅ Database backed up to {backup_name}")
+        print(f"Database backed up to {backup_name}")
     except Exception as e:
-        print(f"❌ Backup failed: {e}")
+        print(f"Backup failed: {e}")
 
 def reset_database():
     """Reset the database (clear all data)"""
     db = ProTechtDatabase()
     db.clear_all_data()
-    print("✅ Database cleared")
+    print("Database cleared")
 
 def main():
     """Main function"""
