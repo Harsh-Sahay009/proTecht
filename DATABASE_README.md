@@ -2,251 +2,182 @@
 
 ## Overview
 
-The proTecht database system provides a comprehensive SQLite database for storing AWS infrastructure data used in compliance analysis. This system replaces the hardcoded mock data with a scalable, persistent database solution.
+The proTecht database system provides comprehensive storage and management of AWS infrastructure data for compliance analysis. It uses SQLite for simplicity and portability while maintaining enterprise-grade data structures.
 
-## Database Structure
+## Features
 
-### Core Tables (35+ tables)
+### Data Storage
+- **AWS Infrastructure Data**: Complete AWS service configurations
+- **Compliance Controls**: Framework-specific control mappings
+- **Analysis Results**: Historical compliance assessments
+- **User Sessions**: Upload and analysis tracking
 
-The database includes tables for all major AWS services:
-
-#### Identity & Access Management
-- `iam_users` - User accounts and MFA status
-- `iam_roles` - IAM roles and permissions
-- `iam_password_policy` - Password policy settings
-- `sso` - Single Sign-On configuration
-
-#### Storage & Data
-- `s3_buckets` - S3 bucket configurations and encryption
-- `kms_keys` - KMS key management and rotation
-- `dynamodb_tables` - DynamoDB table encryption
-- `efs_file_systems` - EFS file system encryption
-- `rds_instances` - RDS database instances
-
-#### Security & Compliance
-- `cloudtrail_trails` - CloudTrail logging configuration
-- `config_rules` - AWS Config compliance rules
-- `config_conformance_packs` - Conformance pack status
-- `guardduty` - GuardDuty findings and detectors
-- `security_hub` - Security Hub standards and findings
-- `macie_jobs` - Macie data discovery jobs
-- `inspector2` - Inspector vulnerability findings
-
-#### Compute & Networking
-- `eks_clusters` - EKS Kubernetes clusters
-- `ecs_clusters` - ECS container clusters
-- `vpc` - VPC configuration and flow logs
-- `security_groups` - Security group rules
-- `api_gateway` - API Gateway endpoints
-- `waf` - WAF web ACLs and rules
-- `cloudfront` - CloudFront distributions
-
-#### Monitoring & Operations
-- `cloudwatch` - CloudWatch alarms and metrics
-- `lambda` - Lambda functions and concurrency
-- `codebuild` - CodeBuild projects and builds
-- `codepipeline` - CodePipeline pipelines
-- `ssm_patch` - SSM patch management
-- `eventbridge_rules` - EventBridge rules and targets
-
-#### Infrastructure
-- `backup` - AWS Backup vaults and resources
-- `route53` - Route53 hosted zones and health checks
-- `direct_connect` - Direct Connect connections
-- `vpn` - VPN endpoints and sessions
-- `detective` - Detective graph and member accounts
+### Database Schema
+- **AWS Services**: EC2, S3, RDS, IAM, VPC, Lambda, CloudTrail, etc.
+- **Compliance Frameworks**: FedRAMP, NIST, ISO, PCI DSS
+- **Control Mappings**: Framework-to-AWS service relationships
+- **Analysis History**: Timestamped compliance results
 
 ## Quick Start
 
 ### 1. Initialize Database
 ```bash
-# The database is automatically initialized when you run the application
-python3 main.py
+python database.py
 ```
 
-### 2. Load Sample Data
+### 2. Load AWS Data
 ```bash
-# Load comprehensive AWS infrastructure data
-python3 load_aws_data.py
+python load_aws_data.py
 ```
 
-### 3. Check Database Status
+### 3. Verify Data
 ```bash
-# View database statistics
-python3 db_manager.py stats
-
-# View sample data from a specific table
-python3 db_manager.py sample iam_users
+python db_manager.py --stats
 ```
 
 ## Database Management
 
-### Available Commands
-
+### View Statistics
 ```bash
-# Show database statistics
-python3 db_manager.py stats
-
-# Show sample data from a table
-python3 db_manager.py sample <table_name>
-
-# Create database backup
-python3 db_manager.py backup
-
-# Reset database (clear all data)
-python3 db_manager.py reset
-
-# Reload AWS data
-python3 db_manager.py reload
+python db_manager.py --stats
 ```
 
-### Database Statistics
+### Show Sample Data
+```bash
+python db_manager.py --sample
+```
 
-Current database contains:
-- **35+ tables** covering all major AWS services
-- **60+ records** of infrastructure data
-- **Comprehensive coverage** of security controls
-- **Real-time access** for compliance analysis
+### Backup Database
+```bash
+python db_manager.py --backup
+```
 
-## Integration with Application
+### Reset Database
+```bash
+python db_manager.py --reset
+```
 
-### Automatic Fallback
-The application automatically uses the database when available, with graceful fallback to hardcoded data:
+### Reload Data
+```bash
+python db_manager.py --reload
+```
 
+## Integration
+
+### In Your Code
 ```python
-def get_aws_data():
-    """Get AWS data from database or fallback"""
-    if db:
-        try:
-            return db.get_aws_data()
-        except Exception as e:
-            print(f"⚠️  Database error, using fallback data: {e}")
-            return FALLBACK_AWS_DATA
-    else:
-        return FALLBACK_AWS_DATA
+from database import ProTechtDatabase
+
+# Initialize database
+db = ProTechtDatabase()
+
+# Get AWS data
+aws_data = db.get_aws_data()
+
+# Get specific service data
+ec2_data = db.get_aws_data()['ec2']
+s3_data = db.get_aws_data()['s3']
 ```
 
-### Data Flow
-1. **Database Query** → Retrieve AWS infrastructure data
-2. **Compliance Analysis** → Compare SSP against database
-3. **Real-time Results** → Generate compliance reports
-4. **AI Recommendations** → Based on actual infrastructure
+### Error Handling
+```python
+try:
+    aws_data = db.get_aws_data()
+except Exception as e:
+    print(f"Database error, using fallback data: {e}")
+    # Use fallback data
+```
 
-## Data Schema
+## Schema Examples
 
-### Example: IAM Users Table
+### AWS EC2 Instances
 ```sql
-CREATE TABLE iam_users (
-    id INTEGER PRIMARY KEY,
-    username TEXT UNIQUE,
-    mfa_enabled BOOLEAN,
-    last_login TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE ec2_instances (
+    id TEXT PRIMARY KEY,
+    instance_type TEXT,
+    state TEXT,
+    security_groups TEXT,
+    iam_role TEXT,
+    encryption TEXT,
+    monitoring TEXT,
+    tags TEXT
 );
 ```
 
-### Example: S3 Buckets Table
+### S3 Buckets
 ```sql
 CREATE TABLE s3_buckets (
-    id INTEGER PRIMARY KEY,
-    bucket_name TEXT UNIQUE,
+    name TEXT PRIMARY KEY,
     encryption TEXT,
-    object_lock_mode TEXT,
-    retention_days INTEGER,
-    public_access_block BOOLEAN,
-    kms_key_id TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    versioning TEXT,
+    public_access TEXT,
+    object_lock TEXT,
+    lifecycle_policy TEXT,
+    tags TEXT
 );
 ```
 
 ## Benefits
 
-### 1. **Scalability**
-- Support for multiple AWS accounts
-- Easy data updates and modifications
-- Efficient querying and filtering
+### Performance
+- **Fast Queries**: Optimized SQLite queries
+- **Efficient Storage**: Compressed data structures
+- **Quick Startup**: Minimal initialization time
 
-### 2. **Reliability**
-- Persistent data storage
-- Automatic backups and recovery
-- Data integrity constraints
+### Reliability
+- **Data Integrity**: ACID compliance
+- **Backup Support**: Easy backup and restore
+- **Error Recovery**: Graceful fallback mechanisms
 
-### 3. **Flexibility**
-- Easy to extend with new services
-- Support for custom data types
-- JSON serialization for complex data
+### Flexibility
+- **Easy Migration**: Simple schema updates
+- **Custom Extensions**: Add new services easily
+- **Framework Support**: Extensible compliance mappings
 
-### 4. **Performance**
-- Fast query execution
-- Indexed fields for quick lookups
-- Optimized for compliance analysis
-
-## Security Features
+## Security
 
 ### Data Protection
-- SQLite database with file-level security
-- No sensitive data in plain text
-- Encrypted storage support
+- **No Sensitive Data**: Only configuration information
+- **Local Storage**: Data stays on your system
+- **Access Control**: File-based permissions
 
-### Access Control
-- Database-level access controls
-- Backup and restore procedures
-- Audit trail with timestamps
-
-## Future Enhancements
-
-### Planned Features
-- **Multi-account support** - Multiple AWS accounts
-- **Real-time sync** - Live AWS data integration
-- **Advanced analytics** - Compliance trend analysis
-- **Custom controls** - User-defined compliance rules
-- **API endpoints** - RESTful database access
-
-### Scalability Improvements
-- **PostgreSQL migration** - For larger deployments
-- **Connection pooling** - Improved performance
-- **Caching layer** - Redis integration
-- **Data versioning** - Historical compliance tracking
+### Best Practices
+- **Regular Backups**: Automated backup scheduling
+- **Version Control**: Schema version tracking
+- **Validation**: Data integrity checks
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Database not found**
-   ```bash
-   # Reinitialize database
-   python3 load_aws_data.py
-   ```
+**Database not found**
+```bash
+python database.py  # Reinitialize database
+```
 
-2. **Permission errors**
-   ```bash
-   # Check file permissions
-   chmod 644 protecht.db
-   ```
+**Data loading failed**
+```bash
+python load_aws_data.py  # Reload data
+```
 
-3. **Data corruption**
-   ```bash
-   # Restore from backup
-   python3 db_manager.py backup
-   python3 db_manager.py reset
-   python3 load_aws_data.py
-   ```
+**Permission errors**
+```bash
+chmod 644 protecht.db  # Fix permissions
+```
 
-### Performance Optimization
-- Regular database maintenance
-- Index optimization for large datasets
-- Query optimization for complex compliance checks
+### Debug Mode
+```bash
+python db_manager.py --debug
+```
 
 ## Support
 
-For database-related issues:
-1. Check the database statistics: `python3 db_manager.py stats`
-2. Verify data integrity: `python3 db_manager.py sample <table>`
-3. Create backup before modifications: `python3 db_manager.py backup`
-4. Reset if needed: `python3 db_manager.py reset`
+For database issues:
+1. Check the logs in `database.log`
+2. Run `python db_manager.py --debug`
+3. Verify file permissions
+4. Check available disk space
 
 ---
 
-**Note**: This database system is designed for development and demonstration purposes. For production use, consider implementing additional security measures and using a more robust database system like PostgreSQL. 
+**proTecht Database System - Enterprise-grade data management for compliance automation** 

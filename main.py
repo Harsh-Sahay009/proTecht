@@ -21,9 +21,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 from protecht import app
 
 if __name__ == '__main__':
-    print("🚀 Starting proTecht - Cybersecurity Compliance Automation Platform")
-    print("📊 Server will be available at http://localhost:5000")
-    print("🎯 No authentication required!")
+    print("Starting proTecht - Cybersecurity Compliance Automation Platform")
+    print("Server will be available at http://localhost:5000")
+    print("No authentication required!")
     print("=" * 60)
     
     app.run(

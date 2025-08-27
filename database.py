@@ -800,7 +800,7 @@ class ProTechtDatabase:
                 ''', (vpn['client_vpn_endpoints'], vpn['active_sessions']))
             
             conn.commit()
-            print("✅ AWS data loaded successfully into database")
+            print("AWS data loaded successfully into database")
             
         except Exception as e:
             conn.rollback()

@@ -178,7 +178,7 @@ AWS_DATA = {
 
 def main():
     """Load AWS data into database"""
-    print("🚀 Loading AWS infrastructure data into proTecht database...")
+    print("Loading AWS infrastructure data into proTecht database...")
     
     try:
         # Initialize database
@@ -187,15 +187,24 @@ def main():
         # Load AWS data
         db.load_aws_data(AWS_DATA)
         
-        print("✅ AWS data loaded successfully!")
-        print("📊 Database contains comprehensive AWS infrastructure data")
-        print("🔍 You can now use this data for compliance analysis")
+        print("AWS data loaded successfully!")
+        print("Database contains comprehensive AWS infrastructure data")
+        print("You can now use this data for compliance analysis")
         
     except Exception as e:
-        print(f"❌ Error loading AWS data: {e}")
+        print(f"Error loading AWS data: {e}")
         return 1
     
     return 0
 
 if __name__ == "__main__":
-    exit(main()) 
+    print("Loading AWS infrastructure data into proTecht database...")
+    
+    # Initialize database
+    db = ProTechtDatabase()
+    
+    # Load AWS data
+    db.load_aws_data()
+    
+    print("AWS data loaded successfully!")
+    print("Database contains comprehensive AWS infrastructure data") 

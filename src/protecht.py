@@ -16,9 +16,9 @@ import requests
 try:
     from dotenv import load_dotenv
     load_dotenv()
-    print("✅ Loaded environment variables from .env file")
+    print("Loaded environment variables from .env file")
 except ImportError:
-    print("⚠️ python-dotenv not installed, using system environment variables")
+    print("python-dotenv not installed, using system environment variables")
 
 # Configuration
 UPLOAD_FOLDER = 'uploads'
@@ -27,9 +27,9 @@ AI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
 
 # Debug API key status
 if AI_API_KEY:
-    print(f"✅ OpenAI API key found: {AI_API_KEY[:20]}...")
+    print(f"OpenAI API key found: {AI_API_KEY[:20]}...")
 else:
-    print("❌ OpenAI API key not found in environment variables")
+    print("OpenAI API key not found in environment variables")
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -102,7 +102,7 @@ def get_aws_data():
         try:
             return db.get_aws_data()
         except Exception as e:
-            print(f"⚠️  Database error, using fallback data: {e}")
+            print(f"Database error, using fallback data: {e}")
             return FALLBACK_AWS_DATA
     else:
         return FALLBACK_AWS_DATA
@@ -111,9 +111,9 @@ def get_aws_data():
 try:
     from database import ProTechtDatabase
     db = ProTechtDatabase()
-    print("✅ Database connection established")
+    print("Database connection established")
 except ImportError:
-    print("⚠️  Database module not found, using fallback data")
+    print("Database module not found, using fallback data")
     db = None
 
 # Fallback AWS data (used if database is not available)
@@ -1878,7 +1878,7 @@ def index():
     <body>
         <div class="container">
             <div class="header">
-                <h1>🚀 proTecht</h1>
+                <h1>proTecht</h1>
                 <p>Advanced Cybersecurity Compliance Automation Platform</p>
                 <div class="stats-bar">
                     <div class="stat-item">
@@ -1903,10 +1903,10 @@ def index():
 
             <div class="main-content">
                 <div class="input-section">
-                    <div class="section-title">📋 System Security Plan (SSP)</div>
+                    <div class="section-title">System Security Plan (SSP)</div>
                     
                     <div class="framework-selector">
-                        <label for="frameworkSelect">🏛️ Compliance Framework</label>
+                        <label for="frameworkSelect">Compliance Framework</label>
                         <select id="frameworkSelect" class="framework-select" onchange="updateFrameworkInfo()">
                             <option value="fedramp">FedRAMP Moderate</option>
                             <option value="nist">NIST 800-53 Rev. 4</option>
@@ -1922,12 +1922,12 @@ def index():
                     </div>
                     
                     <div class="file-upload-section">
-                        <div class="section-title">📁 Upload SSP File</div>
+                        <div class="section-title">Upload SSP File</div>
                         
                         <!-- Simple file input with label -->
                         <div style="text-align: center; margin: 20px 0;">
                             <label for="fileInput" style="display: inline-block; padding: 15px 30px; background: linear-gradient(135deg, #00d4ff, #0099cc); color: white; border-radius: 10px; cursor: pointer; font-size: 16px; transition: all 0.3s ease;">
-                                📄 Choose SSP File
+                                Choose SSP File
                             </label>
                             <input type="file" id="fileInput" accept=".txt,.pdf,.doc,.docx,.md" style="display: none;">
                             <div style="margin-top: 10px; color: #b0b0b0; font-size: 14px;">
@@ -1945,7 +1945,7 @@ def index():
                         <span>OR</span>
                     </div>
                     
-                    <div class="section-title">📝 Paste SSP Text</div>
+                    <div class="section-title">Paste SSP Text</div>
                     <textarea id="sspText" placeholder="Paste your SSP text here...">AC-2: Account Management
 AWS IAM, AWS SSO, and Okta federated via SAML are authoritative.
 Automated inactivation: Config rule \`phoenix-ac2-inactive\` disables after 30 days.
@@ -1984,28 +1984,28 @@ Secrets in Secrets Manager rotated 30 days.</textarea>
                     
                     <!-- New Analysis Actions Section -->
                     <div class="analysis-actions-section">
-                        <div class="section-title">�� Analysis Actions</div>
+                        <div class="section-title">Analysis Actions</div>
                         <div class="action-buttons">
                             <button class="btn btn-primary" onclick="analyzeSSP()">
-                                🔍 Analyze SSP
+                                Analyze SSP
                             </button>
                             <button class="btn btn-ai" onclick="getAIRecommendations()" id="aiBtn" disabled>
-                                🤖 AI Recommendations
+                                AI Recommendations
                             </button>
                         </div>
                     </div>
                 </div>
 
                 <div class="results-section">
-                    <div class="section-title">📊 Analysis Results</div>
+                    <div class="section-title">Analysis Results</div>
                     
                     <!-- Tab Navigation -->
                     <div class="tab-navigation">
                         <button class="tab-button active" onclick="switchTab('compliance')" id="complianceTab">
-                            📊 Compliance Analysis
+                            Compliance Analysis
                         </button>
                         <button class="tab-button" onclick="switchTab('ai')" id="aiTab">
-                            🤖 AI Recommendations
+                            AI Recommendations
                         </button>
                     </div>
                     
@@ -2025,7 +2025,7 @@ Secrets in Secrets Manager rotated 30 days.</textarea>
                         <div class="tab-pane" id="aiTabContent">
                             <div class="ai-recommendations" id="aiRecommendations">
                                 <div class="ai-header">
-                                    <span>🤖</span>
+                                    <span>AI</span>
                                     <span>AI-Powered Recommendations</span>
                                 </div>
                                 <div class="ai-content" id="aiContent">
@@ -2254,20 +2254,20 @@ Regular security testing is performed including penetration testing and vulnerab
                             fileUploaded = true;
                             
                             // Show success message
-                            uploadedFileName.textContent = `✅ ${result.filename}`;
+                            uploadedFileName.textContent = `File uploaded: ${result.filename}`;
                             uploadedFileMessage.textContent = result.message;
                             uploadedFileInfo.style.display = 'block';
                             
                             // Show success state
                             if (uploadLabel) {
-                                uploadLabel.textContent = '✅ File Uploaded!';
+                                uploadLabel.textContent = 'File Uploaded Successfully!';
                                 uploadLabel.style.background = 'linear-gradient(135deg, #00ff00, #00cc00)';
                             }
                             
                             // Reset after 3 seconds
                             setTimeout(() => {
                                 if (uploadLabel) {
-                                    uploadLabel.textContent = '📄 Choose SSP File';
+                                    uploadLabel.textContent = 'Choose SSP File';
                                     uploadLabel.style.background = 'linear-gradient(135deg, #00d4ff, #0099cc)';
                                 }
                             }, 3000);
@@ -2285,7 +2285,7 @@ Regular security testing is performed including penetration testing and vulnerab
                     
                     // Reset label on error
                     if (uploadLabel) {
-                        uploadLabel.textContent = '📄 Choose SSP File';
+                        uploadLabel.textContent = 'Choose SSP File';
                         uploadLabel.style.background = 'linear-gradient(135deg, #00d4ff, #0099cc)';
                     }
                 }
@@ -2347,34 +2347,34 @@ Regular security testing is performed including penetration testing and vulnerab
                 console.log('getAIRecommendations called');
                 
                 if (!currentAnalysisData) {
-                    console.error('❌ No currentAnalysisData found');
+                    console.error('No currentAnalysisData found');
                     alert('Please analyze your SSP first to get AI recommendations.');
                     return;
                 }
                 
-                console.log('✅ Current analysis data found:', currentAnalysisData);
+                console.log('Current analysis data found:', currentAnalysisData);
                 
                 // Switch to AI tab
-                console.log('🔄 Switching to AI tab...');
+                console.log('Switching to AI tab...');
                 switchTab('ai');
-                console.log('✅ Switched to AI tab');
+                console.log('Switched to AI tab');
                 
                 // Wait a moment for tab switch to complete
                 await new Promise(resolve => setTimeout(resolve, 100));
                 
                 const aiContent = document.getElementById('aiContent');
-                console.log('🔍 AI content element:', aiContent);
+                console.log('AI content element:', aiContent);
                 
                 if (!aiContent) {
-                    console.error('❌ AI content element not found!');
+                    console.error('AI content element not found!');
                     alert('Error: AI content element not found. Please refresh the page.');
                     return;
                 }
                 
                 // Set loading content
-                console.log('🔄 Setting loading content...');
-                aiContent.innerHTML = '<div style="color: #00ff00; text-align: center; padding: 20px; font-size: 18px;">🔄 Loading AI recommendations...</div>';
-                console.log('✅ Set loading content');
+                console.log('Setting loading content...');
+                aiContent.innerHTML = '<div style="color: #00ff00; text-align: center; padding: 20px; font-size: 18px;">Loading AI recommendations...</div>';
+                console.log('Set loading content');
                 
                 try {
                     const requestData = {
@@ -2382,7 +2382,7 @@ Regular security testing is performed including penetration testing and vulnerab
                         compliance_summary: currentAnalysisData.compliance_summary
                     };
                     
-                    console.log('📤 Sending request with data:', requestData);
+                    console.log('Sending request with data:', requestData);
                     
                     const response = await fetch('/ai-recommendations', {
                         method: 'POST',
@@ -2390,32 +2390,32 @@ Regular security testing is performed including penetration testing and vulnerab
                         body: JSON.stringify(requestData)
                     });
                     
-                    console.log('📥 Response status:', response.status);
+                    console.log('Response status:', response.status);
                     const data = await response.json();
-                    console.log('📥 Response data:', data);
+                    console.log('Response data:', data);
                     
                     if (data.success) {
-                        console.log('✅ Setting AI content, length:', data.recommendations.length);
-                        console.log('📝 Content preview:', data.recommendations.substring(0, 200) + '...');
+                        console.log('Setting AI content, length:', data.recommendations.length);
+                        console.log('Content preview:', data.recommendations.substring(0, 200) + '...');
                         
                         // Set the AI recommendations content
                         aiContent.innerHTML = data.recommendations;
                         
-                        console.log('✅ AI content set successfully');
+                        console.log('AI content set successfully');
                         
                         // Force a repaint to ensure visibility
                         aiContent.style.display = 'none';
                         aiContent.offsetHeight;
                         aiContent.style.display = 'block';
                         
-                        console.log('✅ Final AI content innerHTML length:', aiContent.innerHTML.length);
+                        console.log('Final AI content innerHTML length:', aiContent.innerHTML.length);
                     } else {
-                        console.error('❌ AI recommendations error:', data.error);
-                        aiContent.innerHTML = '<div style="color: #ff6b6b; text-align: center; padding: 20px;">❌ Error: ' + data.error + '</div>';
+                        console.error('AI recommendations error:', data.error);
+                        aiContent.innerHTML = '<div style="color: #ff6b6b; text-align: center; padding: 20px;">Error: ' + data.error + '</div>';
                     }
                 } catch (error) {
-                    console.error('❌ AI recommendations fetch error:', error);
-                    aiContent.innerHTML = '<div style="color: #ff6b6b; text-align: center; padding: 20px;">❌ Error: ' + error.message + '</div>';
+                    console.error('AI recommendations fetch error:', error);
+                    aiContent.innerHTML = '<div style="color: #ff6b6b; text-align: center; padding: 20px;">Error: ' + error.message + '</div>';
                 }
                 
                 console.log('=== AI RECOMMENDATIONS DEBUG END ===');
@@ -2679,10 +2679,10 @@ def generate_ai_recommendations(audit_results):
     try:
         # Check if API key is available
         if not AI_API_KEY:
-            print("❌ AI API key not found, using fallback")
+            print("AI API key not found, using fallback")
             return generate_basic_recommendations(audit_results)
         
-        print(f"✅ AI API key found: {AI_API_KEY[:20]}...")
+        print(f"OpenAI API key found: {AI_API_KEY[:20]}...")
         
         # Prepare the audit data for AI analysis
         audit_summary = {
@@ -2693,7 +2693,7 @@ def generate_ai_recommendations(audit_results):
             'compliance_rate': len([r for r in audit_results.values() if r.get('status') == 'PASS']) / len(audit_results) * 100 if audit_results else 0
         }
         
-        print(f"📊 Audit Summary: {audit_summary}")
+        print(f"Audit Summary: {audit_summary}")
         
         # Create a detailed prompt for AI analysis
         prompt = f"""
@@ -2720,7 +2720,7 @@ def generate_ai_recommendations(audit_results):
         Format the response in HTML with proper styling, emojis, and clear sections.
         """
 
-        print("🤖 Sending request to OpenAI API...")
+        print("Sending request to OpenAI API...")
         
         # Call AI API for enhanced recommendations
         headers = {
@@ -2744,27 +2744,27 @@ def generate_ai_recommendations(audit_results):
             'temperature': 0.7
         }
         
-        print(f"📤 API Request Data: {json.dumps(data, indent=2)}")
+        print(f"API Request Data: {json.dumps(data, indent=2)}")
         
         response = requests.post('https://api.openai.com/v1/chat/completions', headers=headers, json=data, timeout=30)
         
-        print(f"📥 API Response Status: {response.status_code}")
-        print(f"📥 API Response Headers: {dict(response.headers)}")
+        print(f"API Response Status: {response.status_code}")
+        print(f"API Response Headers: {dict(response.headers)}")
         
         if response.status_code == 200:
             ai_response = response.json()
-            print(f"✅ AI Response received: {ai_response}")
+            print(f"AI Response received: {ai_response}")
             recommendations = ai_response['choices'][0]['message']['content']
-            print(f"📝 Recommendations generated: {len(recommendations)} characters")
+            print(f"Recommendations generated: {len(recommendations)} characters")
             return recommendations
         else:
-            print(f"❌ AI API call failed with status {response.status_code}")
-            print(f"❌ Error response: {response.text}")
+            print(f"AI API call failed with status {response.status_code}")
+            print(f"Error response: {response.text}")
             # Fallback to basic recommendations if AI call fails
             return generate_basic_recommendations(audit_results)
             
     except Exception as e:
-        print(f"❌ AI API call failed with exception: {e}")
+        print(f"AI API call failed with exception: {e}")
         import traceback
         traceback.print_exc()
         # Fallback to basic recommendations
@@ -2783,12 +2783,12 @@ def generate_basic_recommendations(audit_results):
     total_controls = len(audit_results)
     compliance_rate = len(passed_controls) / total_controls * 100 if total_controls > 0 else 0
     
-    recommendations.append("🤖 **AI-Powered Compliance Analysis**\n")
+    recommendations.append("**AI-Powered Compliance Analysis**\n")
     recommendations.append(f"Based on analysis of {total_controls} controls, your overall compliance rate is {compliance_rate:.1f}%.\n")
     
     # Critical issues (FAIL controls)
     if failed_controls:
-        recommendations.append("🚨 **CRITICAL ISSUES - Immediate Action Required:**\n")
+        recommendations.append("**CRITICAL ISSUES - Immediate Action Required:**\n")
         for control_id, control in audit_results.items():
             if control.get('status') == 'FAIL':
                 title = control.get('control_title', 'Unknown Control')
@@ -2802,7 +2802,7 @@ def generate_basic_recommendations(audit_results):
     
     # Medium priority issues (PARTIAL controls)
     if partial_controls:
-        recommendations.append("⚠️ **MEDIUM PRIORITY - Address Soon:**\n")
+        recommendations.append("**MEDIUM PRIORITY - Address Soon:**\n")
         for control_id, control in audit_results.items():
             if control.get('status') == 'PARTIAL':
                 title = control.get('control_title', 'Unknown Control')
@@ -2815,7 +2815,7 @@ def generate_basic_recommendations(audit_results):
                 recommendations.append("")
     
     # Strategic recommendations
-    recommendations.append("🎯 **STRATEGIC RECOMMENDATIONS:**\n")
+    recommendations.append("**STRATEGIC RECOMMENDATIONS:**\n")
     
     # MFA issues
     mfa_issues = [r for r in audit_results.values() if 'MFA' in str(r.get('findings', []))]
@@ -2846,7 +2846,7 @@ def generate_basic_recommendations(audit_results):
         recommendations.append("• **Maintenance**: Excellent compliance posture! Focus on maintaining and monitoring existing controls.")
     
     # Next steps
-    recommendations.append("\n📋 **NEXT STEPS:**\n")
+    recommendations.append("\n**NEXT STEPS:**\n")
     recommendations.append("1. **Prioritize Critical Issues**: Address all FAIL controls immediately")
     recommendations.append("2. **Review Partial Controls**: Implement recommendations for PARTIAL controls")
     recommendations.append("3. **Document Remediation**: Keep records of all changes made")
@@ -2968,7 +2968,7 @@ def debug_extraction():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    print("🚀 Starting proTecht Simple MVP...")
-    print("📊 Server will be available at http://localhost:5000")
-    print("🎯 No authentication required!")
+    print("Starting proTecht Simple MVP...")
+    print("Server will be available at http://localhost:5000")
+    print("No authentication required!")
     app.run(host='0.0.0.0', port=5000, debug=True) 
