@@ -186,8 +186,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 👨‍💻 Author
 
 **Harsh Sahay**
-- LinkedIn: [Harsh Sahay](https://linkedin.com/in/harshsahay)
-- GitHub: [@harshsahay](https://github.com/harshsahay)
+- LinkedIn: [Harsh Sahay](www.linkedin.com/in/harsh-sahay09)
+- GitHub: [@harshsahay](https://github.com/Harsh-Sahay009)
 
 ## 🙏 Acknowledgments
 
