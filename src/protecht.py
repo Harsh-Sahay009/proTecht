@@ -10,12 +10,28 @@ from datetime import datetime
 from flask import Flask, request, jsonify, render_template_string
 from werkzeug.utils import secure_filename
 import os
+import requests
 
-app = Flask(__name__)
+# Load environment variables from .env file if it exists
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+    print("✅ Loaded environment variables from .env file")
+except ImportError:
+    print("⚠️ python-dotenv not installed, using system environment variables")
 
-# File upload configuration
+# Configuration
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'doc', 'docx', 'md'}
+AI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
+
+# Debug API key status
+if AI_API_KEY:
+    print(f"✅ OpenAI API key found: {AI_API_KEY[:20]}...")
+else:
+    print("❌ OpenAI API key not found in environment variables")
+
+app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
@@ -1040,37 +1056,69 @@ def index():
             .stats-bar {
                 display: flex;
                 justify-content: center;
-                gap: 30px;
-                margin-bottom: 40px;
+                gap: 40px;
+                margin-top: 30px;
                 flex-wrap: wrap;
             }
 
             .stat-item {
-                background: rgba(255, 255, 255, 0.1);
-                backdrop-filter: blur(10px);
-                border: 1px solid rgba(255, 255, 255, 0.2);
+                text-align: center;
+                background: rgba(0, 212, 255, 0.1);
+                border: 1px solid rgba(0, 212, 255, 0.3);
                 border-radius: 15px;
                 padding: 20px;
-                text-align: center;
                 min-width: 150px;
-                transition: transform 0.3s ease, box-shadow 0.3s ease;
+                transition: all 0.3s ease;
             }
 
             .stat-item:hover {
                 transform: translateY(-5px);
-                box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+                box-shadow: 0 10px 25px rgba(0, 212, 255, 0.3);
+                background: rgba(0, 212, 255, 0.15);
             }
 
             .stat-number {
-                font-size: 2rem;
+                font-size: 2.5rem;
                 font-weight: bold;
                 color: #00d4ff;
+                margin-bottom: 8px;
+                text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
             }
 
             .stat-label {
-                font-size: 0.9rem;
                 color: #b0b0b0;
-                margin-top: 5px;
+                font-size: 0.9rem;
+                font-weight: 600;
+            }
+
+            /* Rotating Framework Animation */
+            .rotating-framework {
+                position: relative;
+                height: 20px;
+                overflow: hidden;
+            }
+
+            .framework-text {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                opacity: 0;
+                transform: translateY(20px);
+                transition: all 0.5s ease;
+                color: #b0b0b0;
+                font-size: 0.9rem;
+                font-weight: 600;
+            }
+
+            .framework-text.active {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            .framework-text.sliding-out {
+                opacity: 0;
+                transform: translateY(-20px);
             }
 
             .main-content {
@@ -1130,13 +1178,6 @@ def index():
                 outline: none;
                 border-color: #00d4ff;
                 box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
-            }
-
-            .button-group {
-                display: flex;
-                gap: 15px;
-                margin-top: 20px;
-                flex-wrap: wrap;
             }
 
             .btn {
@@ -1359,27 +1400,192 @@ def index():
                 left: 0;
             }
 
+            /* AI Recommendations specific styles - Futuristic Dark Theme */
             .ai-recommendations {
-                background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(238, 90, 36, 0.1));
-                border: 1px solid rgba(255, 107, 107, 0.3);
-                border-radius: 15px;
-                padding: 25px;
-                margin-top: 20px;
-                display: none;
+                background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(20, 20, 40, 0.9));
+                border: 1px solid rgba(0, 212, 255, 0.3);
+                border-radius: 20px;
+                padding: 30px;
+                margin: 20px 0;
+                box-shadow: 0 0 30px rgba(0, 212, 255, 0.2);
+                backdrop-filter: blur(10px);
+                position: relative;
+                overflow: hidden;
+            }
+
+            .ai-recommendations::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: linear-gradient(90deg, #00d4ff, #ff6b6b, #00d4ff);
+                animation: shimmer 3s ease-in-out infinite;
+            }
+
+            @keyframes shimmer {
+                0%, 100% { transform: translateX(-100%); }
+                50% { transform: translateX(100%); }
             }
 
             .ai-header {
                 display: flex;
                 align-items: center;
-                gap: 10px;
-                margin-bottom: 15px;
-                color: #ff6b6b;
-                font-weight: 600;
+                gap: 15px;
+                font-size: 20px;
+                font-weight: bold;
+                color: #00d4ff;
+                margin-bottom: 25px;
+                text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+            }
+
+            .ai-header span:first-child {
+                font-size: 28px;
+                animation: pulse 2s ease-in-out infinite;
+            }
+
+            @keyframes pulse {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.1); }
             }
 
             .ai-content {
-                line-height: 1.6;
+                background: linear-gradient(135deg, rgba(0, 0, 0, 0.6), rgba(20, 20, 40, 0.7));
+                border-radius: 15px;
+                padding: 25px;
+                border: 1px solid rgba(0, 212, 255, 0.2);
+                min-height: 300px;
+                overflow-y: auto;
+                max-height: 700px;
                 color: #e0e0e0;
+                line-height: 1.7;
+                position: relative;
+            }
+
+            .ai-content::-webkit-scrollbar {
+                width: 8px;
+            }
+
+            .ai-content::-webkit-scrollbar-track {
+                background: rgba(0, 0, 0, 0.3);
+                border-radius: 4px;
+            }
+
+            .ai-content::-webkit-scrollbar-thumb {
+                background: linear-gradient(45deg, #00d4ff, #0099cc);
+                border-radius: 4px;
+            }
+
+            .ai-content::-webkit-scrollbar-thumb:hover {
+                background: linear-gradient(45deg, #0099cc, #00d4ff);
+            }
+
+            /* AI Content Typography */
+            .ai-content h1 {
+                color: #00d4ff;
+                font-size: 28px;
+                margin: 25px 0 15px 0;
+                text-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+                border-bottom: 2px solid rgba(0, 212, 255, 0.3);
+                padding-bottom: 10px;
+            }
+
+            .ai-content h2 {
+                color: #ff6b6b;
+                font-size: 22px;
+                margin: 20px 0 12px 0;
+                text-shadow: 0 0 10px rgba(255, 107, 107, 0.3);
+            }
+
+            .ai-content h3 {
+                color: #ffd93d;
+                font-size: 18px;
+                margin: 15px 0 10px 0;
+                text-shadow: 0 0 8px rgba(255, 217, 61, 0.3);
+            }
+
+            .ai-content p {
+                color: #b0b0b0;
+                line-height: 1.8;
+                margin-bottom: 15px;
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            }
+
+            .ai-content ul, .ai-content ol {
+                margin: 15px 0 15px 25px;
+                color: #b0b0b0;
+            }
+
+            .ai-content li {
+                margin-bottom: 10px;
+                color: #b0b0b0;
+                position: relative;
+                padding-left: 5px;
+            }
+
+            .ai-content li::before {
+                content: '▶';
+                color: #00d4ff;
+                font-weight: bold;
+                position: absolute;
+                left: -15px;
+                animation: blink 2s ease-in-out infinite;
+            }
+
+            @keyframes blink {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.5; }
+            }
+
+            .ai-content strong {
+                color: #00d4ff;
+                text-shadow: 0 0 5px rgba(0, 212, 255, 0.3);
+            }
+
+            .ai-content .critical {
+                color: #ff6b6b;
+                text-shadow: 0 0 5px rgba(255, 107, 107, 0.3);
+            }
+
+            .ai-content .medium {
+                color: #ffd93d;
+                text-shadow: 0 0 5px rgba(255, 217, 61, 0.3);
+            }
+
+            .ai-content .strategic {
+                color: #00d4ff;
+                text-shadow: 0 0 5px rgba(0, 212, 255, 0.3);
+            }
+
+            .ai-content .actionable {
+                color: #00ff88;
+                text-shadow: 0 0 5px rgba(0, 255, 136, 0.3);
+            }
+
+            /* Loading state */
+            .ai-content .loading {
+                text-align: center;
+                padding: 40px;
+                color: #00d4ff;
+                font-size: 18px;
+                text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+            }
+
+            .ai-content .loading::after {
+                content: '';
+                display: inline-block;
+                width: 20px;
+                height: 20px;
+                border: 2px solid #00d4ff;
+                border-radius: 50%;
+                border-top-color: transparent;
+                animation: spin 1s linear infinite;
+                margin-left: 10px;
+            }
+
+            @keyframes spin {
+                to { transform: rotate(360deg); }
             }
 
             .framework-selector {
@@ -1535,6 +1741,102 @@ def index():
                 font-size: 14px;
             }
 
+            .analysis-actions-section {
+                background: rgba(0, 212, 255, 0.05);
+                border: 1px solid rgba(0, 212, 255, 0.2);
+                border-radius: 15px;
+                padding: 25px;
+                margin: 30px 0;
+                text-align: center;
+            }
+
+            .action-buttons {
+                display: flex;
+                justify-content: center;
+                gap: 20px;
+                margin-top: 20px;
+                flex-wrap: wrap;
+            }
+
+            .action-buttons .btn {
+                min-width: 200px;
+                padding: 15px 25px;
+                font-size: 16px;
+                font-weight: 600;
+                border-radius: 10px;
+                border: none;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            }
+
+            .action-buttons .btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            }
+
+            .action-buttons .btn:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+                transform: none;
+            }
+
+            /* Tab Navigation Styles */
+            .tab-navigation {
+                display: flex;
+                background: rgba(0, 0, 0, 0.2);
+                border-radius: 10px;
+                padding: 5px;
+                margin-bottom: 20px;
+                gap: 5px;
+            }
+
+            .tab-button {
+                flex: 1;
+                padding: 12px 20px;
+                background: transparent;
+                border: none;
+                border-radius: 8px;
+                color: #b0b0b0;
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                text-align: center;
+            }
+
+            .tab-button:hover {
+                background: rgba(0, 212, 255, 0.1);
+                color: #ffffff;
+            }
+
+            .tab-button.active {
+                background: linear-gradient(135deg, #00d4ff, #0099cc);
+                color: white;
+                box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+            }
+
+            /* Tab Content Styles */
+            .tab-content {
+                position: relative;
+            }
+
+            .tab-pane {
+                display: none;
+                animation: fadeIn 0.3s ease-in-out;
+            }
+
+            .tab-pane.active {
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+            }
+
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+
             @media (max-width: 768px) {
                 .main-content {
                     grid-template-columns: 1fr;
@@ -1581,7 +1883,12 @@ def index():
                 <div class="stats-bar">
                     <div class="stat-item">
                         <div class="stat-number">50+</div>
-                        <div class="stat-label">FedRAMP Controls</div>
+                        <div class="stat-label rotating-framework">
+                            <span class="framework-text active">FedRAMP Controls</span>
+                            <span class="framework-text">NIST Controls</span>
+                            <span class="framework-text">ISO Controls</span>
+                            <span class="framework-text">PCI DSS Controls</span>
+                        </div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-number">99%</div>
@@ -1616,11 +1923,16 @@ def index():
                     
                     <div class="file-upload-section">
                         <div class="section-title">📁 Upload SSP File</div>
-                        <div class="file-upload-area" id="fileUploadArea">
-                            <div class="file-upload-icon">📄</div>
-                            <div class="file-upload-text">Click to upload or drag & drop</div>
-                            <div class="file-upload-subtext">Supports: TXT, PDF, DOC, DOCX, MD (Max 16MB)</div>
-                            <input type="file" id="fileInput" class="file-input" accept=".txt,.pdf,.doc,.docx,.md">
+                        
+                        <!-- Simple file input with label -->
+                        <div style="text-align: center; margin: 20px 0;">
+                            <label for="fileInput" style="display: inline-block; padding: 15px 30px; background: linear-gradient(135deg, #00d4ff, #0099cc); color: white; border-radius: 10px; cursor: pointer; font-size: 16px; transition: all 0.3s ease;">
+                                📄 Choose SSP File
+                            </label>
+                            <input type="file" id="fileInput" accept=".txt,.pdf,.doc,.docx,.md" style="display: none;">
+                            <div style="margin-top: 10px; color: #b0b0b0; font-size: 14px;">
+                                Supports: TXT, PDF, DOC, DOCX, MD (Max 16MB)
+                            </div>
                         </div>
                         
                         <div class="uploaded-file-info" id="uploadedFileInfo" style="display: none;">
@@ -1636,7 +1948,7 @@ def index():
                     <div class="section-title">📝 Paste SSP Text</div>
                     <textarea id="sspText" placeholder="Paste your SSP text here...">AC-2: Account Management
 AWS IAM, AWS SSO, and Okta federated via SAML are authoritative.
-Automated inactivation: Config rule `phoenix-ac2-inactive` disables after 30 days.
+Automated inactivation: Config rule \`phoenix-ac2-inactive\` disables after 30 days.
 
 IA-2: Identification & Authentication
 MFA enforced on all users and root.
@@ -1670,36 +1982,56 @@ SC-13: Cryptographic Protection
 Data at rest: S3/RDS/EFS/Dynamo encrypted with CMKs.
 Secrets in Secrets Manager rotated 30 days.</textarea>
                     
-                    <div class="button-group">
-                        <button class="btn btn-primary" onclick="analyzeSSP()">
-                            🔍 Analyze Compliance
-                        </button>
-                        <button class="btn btn-ai" onclick="getAIRecommendations()" id="aiBtn" disabled>
-                            🤖 AI Recommendations
-                        </button>
-                        <button class="btn btn-secondary" onclick="resetToSampleText()" id="resetBtn">
-                            🔄 Reset to Sample
-                        </button>
+                    <!-- New Analysis Actions Section -->
+                    <div class="analysis-actions-section">
+                        <div class="section-title">�� Analysis Actions</div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" onclick="analyzeSSP()">
+                                🔍 Analyze SSP
+                            </button>
+                            <button class="btn btn-ai" onclick="getAIRecommendations()" id="aiBtn" disabled>
+                                🤖 AI Recommendations
+                            </button>
+                        </div>
                     </div>
                 </div>
 
                 <div class="results-section">
-                    <div class="section-title">📊 Compliance Analysis</div>
+                    <div class="section-title">📊 Analysis Results</div>
                     
-                    <div class="loading" id="loading">
-                        <div class="spinner"></div>
-                        <p>Analyzing your SSP against AWS infrastructure...</p>
+                    <!-- Tab Navigation -->
+                    <div class="tab-navigation">
+                        <button class="tab-button active" onclick="switchTab('compliance')" id="complianceTab">
+                            📊 Compliance Analysis
+                        </button>
+                        <button class="tab-button" onclick="switchTab('ai')" id="aiTab">
+                            🤖 AI Recommendations
+                        </button>
                     </div>
                     
-                    <div id="results"></div>
-                    
-                    <div class="ai-recommendations" id="aiRecommendations">
-                        <div class="ai-header">
-                            <span>🤖</span>
-                            <span>AI-Powered Recommendations</span>
+                    <!-- Tab Content -->
+                    <div class="tab-content">
+                        <!-- Compliance Analysis Tab -->
+                        <div class="tab-pane active" id="complianceTabContent">
+                            <div class="loading" id="loading">
+                                <div class="spinner"></div>
+                                <p>Analyzing your SSP against AWS infrastructure...</p>
+                            </div>
+                            
+                            <div id="results"></div>
                         </div>
-                        <div class="ai-content" id="aiContent">
-                            Click "AI Recommendations" to get intelligent suggestions for improving your compliance posture.
+                        
+                        <!-- AI Recommendations Tab -->
+                        <div class="tab-pane" id="aiTabContent">
+                            <div class="ai-recommendations" id="aiRecommendations">
+                                <div class="ai-header">
+                                    <span>🤖</span>
+                                    <span>AI-Powered Recommendations</span>
+                                </div>
+                                <div class="ai-content" id="aiContent">
+                                    Click "AI Recommendations" to get intelligent suggestions for improving your compliance posture.
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1707,6 +2039,15 @@ Secrets in Secrets Manager rotated 30 days.</textarea>
         </div>
 
         <script>
+            // Test if JavaScript is loading
+            console.log('JavaScript is loading...');
+            
+            // Global error handler to catch any JavaScript errors
+            window.addEventListener('error', function(e) {
+                console.error('JavaScript Error:', e.error);
+                alert('JavaScript Error: ' + e.error.message);
+            });
+            
             let currentAnalysisData = null;
             let frameworksData = null;
 
@@ -1719,7 +2060,34 @@ Secrets in Secrets Manager rotated 30 days.</textarea>
                 } catch (error) {
                     console.error('Error loading frameworks:', error);
                 }
+                
+                // Start the rotating framework animation
+                startFrameworkRotation();
             });
+
+            // Rotating framework animation
+            function startFrameworkRotation() {
+                const frameworkTexts = document.querySelectorAll('.framework-text');
+                let currentIndex = 0;
+                
+                function rotateFramework() {
+                    // Remove active class from current text
+                    frameworkTexts[currentIndex].classList.remove('active');
+                    frameworkTexts[currentIndex].classList.add('sliding-out');
+                    
+                    // Move to next framework
+                    currentIndex = (currentIndex + 1) % frameworkTexts.length;
+                    
+                    // Add active class to new text
+                    setTimeout(() => {
+                        frameworkTexts[currentIndex].classList.remove('sliding-out');
+                        frameworkTexts[currentIndex].classList.add('active');
+                    }, 500);
+                }
+                
+                // Rotate every 3 seconds
+                setInterval(rotateFramework, 3000);
+            }
 
             function updateFrameworkInfo() {
                 const frameworkSelect = document.getElementById('frameworkSelect');
@@ -1829,7 +2197,6 @@ Regular security testing is performed including penetration testing and vulnerab
 
                 console.log('Processing file:', file.name, 'Size:', file.size, 'Type:', file.type);
 
-                const fileUploadArea = document.getElementById('fileUploadArea');
                 const uploadedFileInfo = document.getElementById('uploadedFileInfo');
                 const uploadedFileName = document.getElementById('uploadedFileName');
                 const uploadedFileMessage = document.getElementById('uploadedFileMessage');
@@ -1838,7 +2205,7 @@ Regular security testing is performed including penetration testing and vulnerab
                 // Check file size (16MB limit)
                 if (file.size > 16 * 1024 * 1024) {
                     console.error('File too large:', file.size);
-                    showUploadError('File size exceeds 16MB limit');
+                    alert('File size exceeds 16MB limit');
                     return;
                 }
 
@@ -1849,15 +2216,18 @@ Regular security testing is performed including penetration testing and vulnerab
                 
                 if (!isValidType) {
                     console.error('Invalid file type:', fileName);
-                    showUploadError('Invalid file type. Please upload TXT, PDF, DOC, DOCX, or MD files.');
+                    alert('Invalid file type. Please upload TXT, PDF, DOC, DOCX, or MD files.');
                     return;
                 }
 
                 console.log('File validation passed, starting upload...');
 
                 // Show loading state
-                fileUploadArea.innerHTML = '<div class="file-upload-icon">⏳</div><div class="file-upload-text">Processing file...</div>';
-                fileUploadArea.style.borderColor = '#ffaa00';
+                const uploadLabel = document.querySelector('label[for="fileInput"]');
+                if (uploadLabel) {
+                    uploadLabel.textContent = '⏳ Processing...';
+                    uploadLabel.style.background = 'linear-gradient(135deg, #ffaa00, #ff8800)';
+                }
 
                 try {
                     const formData = new FormData();
@@ -1888,16 +2258,19 @@ Regular security testing is performed including penetration testing and vulnerab
                             uploadedFileMessage.textContent = result.message;
                             uploadedFileInfo.style.display = 'block';
                             
-                            // Reset upload area
-                            resetFileUploadArea();
+                            // Show success state
+                            if (uploadLabel) {
+                                uploadLabel.textContent = '✅ File Uploaded!';
+                                uploadLabel.style.background = 'linear-gradient(135deg, #00ff00, #00cc00)';
+                            }
                             
-                            // Show success animation
-                            fileUploadArea.innerHTML = '<div class="file-upload-icon">✅</div><div class="file-upload-text">File uploaded successfully!</div>';
-                            fileUploadArea.style.borderColor = '#00ff00';
-                            
+                            // Reset after 3 seconds
                             setTimeout(() => {
-                                resetFileUploadArea();
-                            }, 2000);
+                                if (uploadLabel) {
+                                    uploadLabel.textContent = '📄 Choose SSP File';
+                                    uploadLabel.style.background = 'linear-gradient(135deg, #00d4ff, #0099cc)';
+                                }
+                            }, 3000);
                         } else {
                             console.error('Text extraction failed:', result.ssp_text);
                             throw new Error('Unable to extract readable text from file. Please ensure it contains text content.');
@@ -1908,30 +2281,14 @@ Regular security testing is performed including penetration testing and vulnerab
                     }
                 } catch (error) {
                     console.error('Upload error:', error);
-                    showUploadError(error.message);
+                    alert('Upload failed: ' + error.message);
+                    
+                    // Reset label on error
+                    if (uploadLabel) {
+                        uploadLabel.textContent = '📄 Choose SSP File';
+                        uploadLabel.style.background = 'linear-gradient(135deg, #00d4ff, #0099cc)';
+                    }
                 }
-            }
-
-            function showUploadError(message) {
-                const fileUploadArea = document.getElementById('fileUploadArea');
-                
-                // Show error state
-                fileUploadArea.innerHTML = '<div class="file-upload-icon">❌</div><div class="file-upload-text">Upload failed</div><div class="file-upload-subtext">' + message + '</div>';
-                fileUploadArea.style.borderColor = '#ff4444';
-                
-                setTimeout(() => {
-                    resetFileUploadArea();
-                }, 5000);
-            }
-
-            function resetFileUploadArea() {
-                const fileUploadArea = document.getElementById('fileUploadArea');
-                fileUploadArea.innerHTML = `
-                    <div class="file-upload-icon">📄</div>
-                    <div class="file-upload-text">Click to upload or drag & drop</div>
-                    <div class="file-upload-subtext">Supports: TXT, PDF, DOC, DOCX, MD (Max 16MB)</div>
-                `;
-                fileUploadArea.style.borderColor = 'rgba(0, 212, 255, 0.5)';
             }
 
             // Function to reset file upload state and allow sample text again
@@ -1941,80 +2298,161 @@ Regular security testing is performed including penetration testing and vulnerab
                 uploadedFileInfo.style.display = 'none';
             }
 
-            // Function to reset to sample text for current framework
-            function resetToSampleText() {
-                const frameworkSelect = document.getElementById('frameworkSelect');
-                resetFileUploadState();
-                updateSampleText(frameworkSelect.value);
+            // Tab switching functionality
+            function switchTab(tabName) {
+                console.log('switchTab called with:', tabName);
+                
+                // Remove active class from all tabs and content
+                const tabButtons = document.querySelectorAll('.tab-button');
+                const tabPanes = document.querySelectorAll('.tab-pane');
+                
+                console.log('Found tab buttons:', tabButtons.length);
+                console.log('Found tab panes:', tabPanes.length);
+                
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabPanes.forEach(pane => pane.classList.remove('active'));
+                
+                // Add active class to selected tab and content
+                const selectedTab = document.getElementById(tabName + 'Tab');
+                const selectedPane = document.getElementById(tabName + 'TabContent');
+                
+                console.log('Selected tab element:', selectedTab);
+                console.log('Selected pane element:', selectedPane);
+                
+                if (selectedTab) selectedTab.classList.add('active');
+                if (selectedPane) selectedPane.classList.add('active');
+                
+                console.log('Tab switching complete');
             }
 
-            // Drag and drop functionality
+            // Test function to verify tab content is working
+            function testTabContent() {
+                console.log('testTabContent called');
+                switchTab('ai');
+                
+                const aiContent = document.getElementById('aiContent');
+                console.log('AI content element in test:', aiContent);
+                
+                if (aiContent) {
+                    aiContent.innerHTML = '<div style="color: #00ff00; text-align: center; padding: 20px; font-size: 18px;">✅ Tab content is working! This is a test message.</div>';
+                    console.log('Test content set successfully');
+                } else {
+                    console.error('AI content element not found!');
+                }
+            }
+
+            // Update AI recommendations function to switch to AI tab
+            async function getAIRecommendations() {
+                console.log('=== AI RECOMMENDATIONS DEBUG START ===');
+                console.log('getAIRecommendations called');
+                
+                if (!currentAnalysisData) {
+                    console.error('❌ No currentAnalysisData found');
+                    alert('Please analyze your SSP first to get AI recommendations.');
+                    return;
+                }
+                
+                console.log('✅ Current analysis data found:', currentAnalysisData);
+                
+                // Switch to AI tab
+                console.log('🔄 Switching to AI tab...');
+                switchTab('ai');
+                console.log('✅ Switched to AI tab');
+                
+                // Wait a moment for tab switch to complete
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                const aiContent = document.getElementById('aiContent');
+                console.log('🔍 AI content element:', aiContent);
+                
+                if (!aiContent) {
+                    console.error('❌ AI content element not found!');
+                    alert('Error: AI content element not found. Please refresh the page.');
+                    return;
+                }
+                
+                // Set loading content
+                console.log('🔄 Setting loading content...');
+                aiContent.innerHTML = '<div style="color: #00ff00; text-align: center; padding: 20px; font-size: 18px;">🔄 Loading AI recommendations...</div>';
+                console.log('✅ Set loading content');
+                
+                try {
+                    const requestData = {
+                        audit_results: currentAnalysisData.audit_results,
+                        compliance_summary: currentAnalysisData.compliance_summary
+                    };
+                    
+                    console.log('📤 Sending request with data:', requestData);
+                    
+                    const response = await fetch('/ai-recommendations', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(requestData)
+                    });
+                    
+                    console.log('📥 Response status:', response.status);
+                    const data = await response.json();
+                    console.log('📥 Response data:', data);
+                    
+                    if (data.success) {
+                        console.log('✅ Setting AI content, length:', data.recommendations.length);
+                        console.log('📝 Content preview:', data.recommendations.substring(0, 200) + '...');
+                        
+                        // Set the AI recommendations content
+                        aiContent.innerHTML = data.recommendations;
+                        
+                        console.log('✅ AI content set successfully');
+                        
+                        // Force a repaint to ensure visibility
+                        aiContent.style.display = 'none';
+                        aiContent.offsetHeight;
+                        aiContent.style.display = 'block';
+                        
+                        console.log('✅ Final AI content innerHTML length:', aiContent.innerHTML.length);
+                    } else {
+                        console.error('❌ AI recommendations error:', data.error);
+                        aiContent.innerHTML = '<div style="color: #ff6b6b; text-align: center; padding: 20px;">❌ Error: ' + data.error + '</div>';
+                    }
+                } catch (error) {
+                    console.error('❌ AI recommendations fetch error:', error);
+                    aiContent.innerHTML = '<div style="color: #ff6b6b; text-align: center; padding: 20px;">❌ Error: ' + error.message + '</div>';
+                }
+                
+                console.log('=== AI RECOMMENDATIONS DEBUG END ===');
+            }
+
+            // Simplified file upload functionality
             document.addEventListener('DOMContentLoaded', function() {
-                console.log('DOM loaded, setting up file upload handlers...');
-                const fileUploadArea = document.getElementById('fileUploadArea');
+                console.log('DOM loaded, setting up simplified file upload...');
                 const fileInput = document.getElementById('fileInput');
                 const sspText = document.getElementById('sspText');
 
-                if (!fileUploadArea) {
-                    console.error('fileUploadArea not found!');
-                    return;
-                }
                 if (!fileInput) {
                     console.error('fileInput not found!');
                     return;
                 }
 
-                console.log('File upload elements found, adding event listeners...');
+                console.log('File input found, adding change handler...');
 
-                // Add click handler for file upload area (single trigger)
-                fileUploadArea.addEventListener('click', function(e) {
-                    console.log('File upload area clicked');
-                    e.preventDefault();
-                    e.stopPropagation();
-                    fileInput.click();
-                });
-
-                // Add change handler for file input
+                // Simple change handler for file input
                 fileInput.addEventListener('change', function(e) {
                     console.log('File input changed, files:', e.target.files);
                     if (e.target.files.length > 0) {
-                        console.log('Calling handleFileUpload with file:', e.target.files[0].name);
+                        console.log('Processing file:', e.target.files[0].name);
                         handleFileUpload(e);
                     }
                 });
 
-                // Add drag and drop handlers
-                fileUploadArea.addEventListener('dragover', function(e) {
-                    e.preventDefault();
-                    fileUploadArea.classList.add('dragover');
-                });
-
-                fileUploadArea.addEventListener('dragleave', function(e) {
-                    e.preventDefault();
-                    fileUploadArea.classList.remove('dragover');
-                });
-
-                fileUploadArea.addEventListener('drop', function(e) {
-                    e.preventDefault();
-                    fileUploadArea.classList.remove('dragover');
-                    
-                    const files = e.dataTransfer.files;
-                    console.log('Files dropped:', files);
-                    if (files.length > 0) {
-                        fileInput.files = files;
-                        handleFileUpload({ target: { files: files } });
-                    }
-                });
-
                 // Listen for changes to SSP textarea to reset file upload state
-                sspText.addEventListener('input', function() {
-                    // If user manually clears or significantly modifies the text, reset file upload state
-                    if (this.value.trim() === '') {
-                        resetFileUploadState();
-                    }
-                });
+                if (sspText) {
+                    sspText.addEventListener('input', function() {
+                        if (this.value.trim() === '') {
+                            resetFileUploadState();
+                        }
+                    });
+                }
 
-                console.log('File upload handlers setup complete');
+                console.log('Simplified file upload setup complete');
             });
 
             async function analyzeSSP() {
@@ -2029,6 +2467,8 @@ Regular security testing is performed including penetration testing and vulnerab
                     return;
                 }
                 
+                // Switch to compliance tab and show loading
+                switchTab('compliance');
                 loadingDiv.style.display = 'block';
                 resultsDiv.innerHTML = '';
                 aiBtn.disabled = true;
@@ -2150,37 +2590,6 @@ Regular security testing is performed including penetration testing and vulnerab
                     controlItem.classList.remove('expanded');
                 }
             }
-
-            async function getAIRecommendations() {
-                if (!currentAnalysisData) {
-                    alert('Please analyze your SSP first.');
-                    return;
-                }
-                
-                const aiContent = document.getElementById('aiContent');
-                const aiRecommendations = document.getElementById('aiRecommendations');
-                
-                aiContent.innerHTML = '<div class="spinner" style="width: 30px; height: 30px; margin: 0 auto;"></div><p style="text-align: center; margin-top: 10px;">Generating AI recommendations...</p>';
-                aiRecommendations.style.display = 'block';
-                
-                try {
-                    const response = await fetch('/ai-recommendations', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ audit_results: currentAnalysisData.audit_results })
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        aiContent.innerHTML = data.recommendations.replace(/\\n/g, '<br>');
-                    } else {
-                        aiContent.innerHTML = '<p style="color: #ff6b6b;">❌ Error generating AI recommendations: ' + data.error + '</p>';
-                    }
-                } catch (error) {
-                    aiContent.innerHTML = '<p style="color: #ff6b6b;">❌ Error: ' + error.message + '</p>';
-                }
-            }
         </script>
     </body>
     </html>
@@ -2264,13 +2673,111 @@ def ai_recommendations():
         return jsonify({'error': str(e)}), 500
 
 def generate_ai_recommendations(audit_results):
-    """Generate intelligent recommendations based on audit results"""
+    """Generate intelligent recommendations based on audit results using AI"""
+    print(f"🔍 AI Recommendations Debug: Starting with {len(audit_results)} controls")
+    
+    try:
+        # Check if API key is available
+        if not AI_API_KEY:
+            print("❌ AI API key not found, using fallback")
+            return generate_basic_recommendations(audit_results)
+        
+        print(f"✅ AI API key found: {AI_API_KEY[:20]}...")
+        
+        # Prepare the audit data for AI analysis
+        audit_summary = {
+            'total_controls': len(audit_results),
+            'failed_controls': [r for r in audit_results.values() if r.get('status') == 'FAIL'],
+            'partial_controls': [r for r in audit_results.values() if r.get('status') == 'PARTIAL'],
+            'passed_controls': [r for r in audit_results.values() if r.get('status') == 'PASS'],
+            'compliance_rate': len([r for r in audit_results.values() if r.get('status') == 'PASS']) / len(audit_results) * 100 if audit_results else 0
+        }
+        
+        print(f"📊 Audit Summary: {audit_summary}")
+        
+        # Create a detailed prompt for AI analysis
+        prompt = f"""
+        As a cybersecurity compliance expert, analyze the following audit results and provide comprehensive recommendations:
+
+        AUDIT SUMMARY:
+        - Total Controls: {audit_summary['total_controls']}
+        - Failed Controls: {len(audit_summary['failed_controls'])}
+        - Partial Controls: {len(audit_summary['partial_controls'])}
+        - Passed Controls: {len(audit_summary['passed_controls'])}
+        - Compliance Rate: {audit_summary['compliance_rate']:.1f}%
+
+        AUDIT RESULTS:
+        {json.dumps(audit_results, indent=2)}
+
+        Please provide:
+        1. Executive Summary with compliance assessment
+        2. Critical issues requiring immediate attention
+        3. Medium priority issues to address
+        4. Strategic recommendations for improvement
+        5. Actionable next steps with timelines
+        6. Best practices for maintaining compliance
+
+        Format the response in HTML with proper styling, emojis, and clear sections.
+        """
+
+        print("🤖 Sending request to OpenAI API...")
+        
+        # Call AI API for enhanced recommendations
+        headers = {
+            'Authorization': f'Bearer {AI_API_KEY}',
+            'Content-Type': 'application/json'
+        }
+        
+        data = {
+            'model': 'gpt-3.5-turbo',
+            'messages': [
+                {
+                    'role': 'system',
+                    'content': 'You are a cybersecurity compliance expert specializing in FedRAMP, NIST, and AWS security frameworks. Provide detailed, actionable recommendations with clear priorities and timelines.'
+                },
+                {
+                    'role': 'user',
+                    'content': prompt
+                }
+            ],
+            'max_tokens': 2000,
+            'temperature': 0.7
+        }
+        
+        print(f"📤 API Request Data: {json.dumps(data, indent=2)}")
+        
+        response = requests.post('https://api.openai.com/v1/chat/completions', headers=headers, json=data, timeout=30)
+        
+        print(f"📥 API Response Status: {response.status_code}")
+        print(f"📥 API Response Headers: {dict(response.headers)}")
+        
+        if response.status_code == 200:
+            ai_response = response.json()
+            print(f"✅ AI Response received: {ai_response}")
+            recommendations = ai_response['choices'][0]['message']['content']
+            print(f"📝 Recommendations generated: {len(recommendations)} characters")
+            return recommendations
+        else:
+            print(f"❌ AI API call failed with status {response.status_code}")
+            print(f"❌ Error response: {response.text}")
+            # Fallback to basic recommendations if AI call fails
+            return generate_basic_recommendations(audit_results)
+            
+    except Exception as e:
+        print(f"❌ AI API call failed with exception: {e}")
+        import traceback
+        traceback.print_exc()
+        # Fallback to basic recommendations
+        return generate_basic_recommendations(audit_results)
+
+def generate_basic_recommendations(audit_results):
+    """Generate basic recommendations as fallback"""
     recommendations = []
     
     # Count issues by severity
-    failed_controls = [r for r in audit_results.values() if r['status'] == 'FAIL']
-    partial_controls = [r for r in audit_results.values() if r['status'] == 'PARTIAL']
-    passed_controls = [r for r in audit_results.values() if r['status'] == 'PASS']
+    failed_controls = [r for r in audit_results.values() if r.get('status') == 'FAIL']
+    partial_controls = [r for r in audit_results.values() if r.get('status') == 'PARTIAL']
+    passed_controls = [r for r in audit_results.values() if r.get('status') == 'PASS']
     
     # Overall assessment
     total_controls = len(audit_results)
@@ -2282,30 +2789,30 @@ def generate_ai_recommendations(audit_results):
     # Critical issues (FAIL controls)
     if failed_controls:
         recommendations.append("🚨 **CRITICAL ISSUES - Immediate Action Required:**\n")
-        for control in failed_controls:
-            control_id = control['control_id']
-            title = control['control_title']
-            findings = control.get('findings', [])
-            
-            recommendations.append(f"• **{control_id} ({title})**:")
-            if findings:
-                for finding in findings:
-                    recommendations.append(f"  - {finding}")
-            recommendations.append("")
+        for control_id, control in audit_results.items():
+            if control.get('status') == 'FAIL':
+                title = control.get('control_title', 'Unknown Control')
+                findings = control.get('findings', [])
+                
+                recommendations.append(f"• **{control_id} ({title})**:")
+                if findings:
+                    for finding in findings:
+                        recommendations.append(f"  - {finding}")
+                recommendations.append("")
     
     # Medium priority issues (PARTIAL controls)
     if partial_controls:
         recommendations.append("⚠️ **MEDIUM PRIORITY - Address Soon:**\n")
-        for control in partial_controls:
-            control_id = control['control_id']
-            title = control['control_title']
-            recommendations_list = control.get('recommendations', [])
-            
-            recommendations.append(f"• **{control_id} ({title})**:")
-            if recommendations_list:
-                for rec in recommendations_list:
-                    recommendations.append(f"  - {rec}")
-            recommendations.append("")
+        for control_id, control in audit_results.items():
+            if control.get('status') == 'PARTIAL':
+                title = control.get('control_title', 'Unknown Control')
+                recommendations_list = control.get('recommendations', [])
+                
+                recommendations.append(f"• **{control_id} ({title})**:")
+                if recommendations_list:
+                    for rec in recommendations_list:
+                        recommendations.append(f"  - {rec}")
+                recommendations.append("")
     
     # Strategic recommendations
     recommendations.append("🎯 **STRATEGIC RECOMMENDATIONS:**\n")
@@ -2340,12 +2847,12 @@ def generate_ai_recommendations(audit_results):
     
     # Next steps
     recommendations.append("\n📋 **NEXT STEPS:**\n")
-    recommendations.append("1. **Immediate (This Week)**: Address all FAIL controls")
-    recommendations.append("2. **Short-term (Next 30 Days)**: Resolve PARTIAL controls")
-    recommendations.append("3. **Ongoing**: Implement continuous monitoring and regular assessments")
-    recommendations.append("4. **Long-term**: Consider automated compliance tools and regular training")
+    recommendations.append("1. **Prioritize Critical Issues**: Address all FAIL controls immediately")
+    recommendations.append("2. **Review Partial Controls**: Implement recommendations for PARTIAL controls")
+    recommendations.append("3. **Document Remediation**: Keep records of all changes made")
+    recommendations.append("4. **Schedule Follow-up**: Plan for regular compliance assessments")
     
-    return "\n".join(recommendations)
+    return "<br>".join(recommendations)
 
 @app.route('/frameworks')
 def get_frameworks():
