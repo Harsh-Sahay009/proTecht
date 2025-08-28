@@ -209,6 +209,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Harsh Sahay**
 - GitHub: [@Harsh-Sahay009](https://github.com/Harsh-Sahay009)
-- LinkedIn: [Harsh Sahay](www.linkedin.com/in/harsh-sahay09)
+- LinkedIn: [Harsh Sahay](https://www.linkedin.com/in/harsh-sahay09/)
 
 **Made with dedication for the cybersecurity community** 
